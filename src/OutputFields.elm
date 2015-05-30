@@ -1,10 +1,10 @@
-module OutputFields (htmlSignal, actions, Action) where
+module OutputFields (htmlSignal, actions, Action(..)) where
 
 import Html exposing (..)
 import Types exposing (Lesson)
 
 
-type alias Model = { lessons :: List Lesson }
+type alias Model = { lessons : List Lesson }
 
 
 type Action
@@ -27,7 +27,7 @@ view : Model -> Html
 view model =
   div
     []
-    (List.map (text << name << subject ) model.lessons )
+    (List.map (text << .name << .subject ) model.lessons )
 
 -- SIGNALS
 
@@ -36,7 +36,7 @@ htmlSignal = Signal.map view model
 
 
 model : Signal Model
-model = Signal.foldp view emptyModel actions.signal
+model = Signal.foldp update emptyModel actions.signal
 
 
 actions : Signal.Mailbox Action

@@ -3,12 +3,10 @@ module Main where
 import Html exposing (Html)
 import Signal exposing (Signal, Address)
 import InputFields
+import Task exposing (Task)
+import Http
 
 
--- CONSTANTS
-
-
-recevier = "http://localhost:7097"
 
 -- MAIN
 
@@ -16,3 +14,7 @@ recevier = "http://localhost:7097"
 main : Signal Html
 main =
   InputFields.htmlSignal
+
+
+port updatePort : Signal (Task Http.Error ())
+port updatePort = InputFields.dataTask

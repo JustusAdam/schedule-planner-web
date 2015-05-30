@@ -1,4 +1,4 @@
-module InputFields (htmlSignal) where
+module InputFields (htmlSignal, dataTask) where
 
 
 import Html exposing (..)
@@ -11,7 +11,10 @@ import String
 import Http
 import Types exposing (Model, Lesson, Subject, emptyModel, emptyLesson, emptySubject)
 import Util exposing (..)
-import Lazy exposing (lazy2)
+import Html.Lazy exposing (lazy2)
+import OutputFields
+import Task exposing (andThen, Task)
+
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -19,7 +22,6 @@ type Action
   = NoOp
   | AddLesson
   | AddSubject
-  | Submit
   | DeleteLesson Int
   | DeleteSubject Int
   | UpdateSubjectName String
@@ -50,7 +52,6 @@ update action model =
           subjectField  <- { sid = model.nsid, name = "" }
         }
       DeleteSubject i       -> { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
-      Submit                -> model
       UpdateSubjectName str -> { model | subjectField <- { sf | name <- str } }
       UpdateSubject s       -> { model | lessonField <- { lf | subject <- s } }
       UpdateDay i           -> { model | lessonField <- { lf | day <- i} }
@@ -80,7 +81,8 @@ view : Address Action -> Model -> Html
 view address model =
   let
     enabled = formReady model
-    buttonAction = if enabled then [onClick address Submit] else []
+    box = updateMailbox
+    buttonAction = if enabled then [onClick box.address RequestUpdate] else []
   in
     div
       [ class "row" ]
@@ -208,18 +210,60 @@ subToOption s = option [ value (toString s.sid) ] [ text s.name ]
 
 -- SIGNALS
 
+recevier = "http://localhost:7097"
+
+
+type RequestAction = Waiting | RequestUpdate
+
+
+updateMailbox : Signal.Mailbox RequestAction
+updateMailbox = Signal.mailbox Waiting
+
+
+dummyTask : Task Http.Error (List Lesson)
+dummyTask =
+  Task.succeed
+    [ { subject = { name = "wirjvn", sid = 0}, lid = 0, day = 0, slot = 0 }
+    , { subject = { name = "wirjvn", sid = 0}, lid = 0, day = 0, slot = 2 }
+    , { subject = { name = "wirjvn", sid = 0}, lid = 0, day = 0, slot = 3 }
+    ]
+
+
+doUpdate : RequestAction -> Model -> Task Http.Error ()
+doUpdate action model =
+  let
+    act = OutputFields.actions
+  in
+    case action of
+      Waiting       -> Task.succeed ()
+      RequestUpdate ->
+        Signal.send updateMailbox.address Waiting
+        -- `andThen` (\_ -> getData (Types.encode_datafile model))
+        `andThen` (\_ -> dummyTask)
+        `andThen` (Signal.send act.address << OutputFields.Update)
+
+
+dataTask : Signal (Task Http.Error ())
+dataTask = Signal.map2 doUpdate updateMailbox.signal model
+
+
+getData : Encode.Value -> Task Http.Error (List Lesson)
+getData = Http.post (Decode.list Types.decode_lesson) recevier << Http.string << Encode.encode 0
+
 
 htmlSignal : Signal Html
-htmlSignal = Signal.map (view actions.address) model
+htmlSignal = Signal.map2 (\a b -> div [] [a,b]) (Signal.map (view actions.address) model) OutputFields.htmlSignal
 
 
 actions : Signal.Mailbox Action
 actions =
   Signal.mailbox NoOp
 
+
 model : Signal Model
 model =
   Signal.foldp update initialModel actions.signal
+
 
 initialModel : Model
 initialModel = emptyModel
