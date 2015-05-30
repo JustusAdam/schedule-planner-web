@@ -1,0 +1,35 @@
+module Util where
+
+import Html.Events exposing (on, keyCode)
+import Html exposing (Attribute)
+import Json.Decode as Decode
+import Signal exposing (Signal, Address)
+
+
+infixl 9 !!
+(!!) : List a -> Int -> Maybe a
+xs !! n  =
+  if | n < 0     -> Nothing
+     | otherwise -> case (xs,n) of
+         ([],_)    -> Nothing
+         (x::xs,0) -> Just x
+         (_::xs,n) -> xs !! (n-1)
+
+
+withDefault : b -> (a -> b) -> Result err a -> b
+withDefault v f res =
+  case res of
+    Err _ -> v
+    Ok n  -> f n
+
+
+is13 : Int -> Result String ()
+is13 code =
+  if code == 13 then Ok () else Err "not the right key code"
+
+
+onEnter : Address a -> a -> Attribute
+onEnter address value =
+    on "keydown"
+      (Decode.customDecoder keyCode is13)
+      (\_ -> Signal.message address value)
