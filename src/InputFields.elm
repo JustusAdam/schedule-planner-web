@@ -11,6 +11,7 @@ import String
 import Http
 import Types exposing (Model, Lesson, Subject, emptyModel, emptyLesson, emptySubject)
 import Util exposing (..)
+import Lazy exposing (lazy2)
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -85,10 +86,10 @@ view address model =
       [ class "row" ]
       [ div
         [ id "subjects-area", class "small-6 columns" ]
-        [ subjectDisplay address model ]
+        [ lazy2 subjectDisplay address model ]
       , div
         [ id "lessons-area", class "small-6 columns" ]
-        [ lessonDisplay address model ]
+        [ lazy2 lessonDisplay address model ]
       , a
         ([ classList [("button", True), ("success", True), ("disabled", not enabled)] ] ++ buttonAction)
         [ text ">>=" ]
