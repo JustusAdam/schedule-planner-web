@@ -85,7 +85,8 @@ emptyLesson =
 decode_lesson : Decode.Decoder Lesson
 decode_lesson =
   Decode.object3
-    (\sub day' slot' -> { lid = 0, subject = { name = sub, sid = 0 }, day = day', slot = slot' })
+    (\sub day' slot' ->
+      { lid = 0, subject = { name = sub, sid = 0 }, day = day', slot = slot' })
     ("subject" :=  Decode.string)
     ("day" := Decode.int)
     ("slot" := Decode.int)
@@ -108,9 +109,9 @@ target_encoding_list : Target -> List (String, Encode.Value)
 target_encoding_list t =
   let
     (scope, vals) = case t of
-                      Day i    -> ("day", [("day", Encode.int i)])
-                      Cell d s -> ("cell", [("day", Encode.int d), ("slot", Encode.int s)])
-                      Slot s   -> ("slot", [("slot", Encode.int s)])
+          Day i    -> ("day", [("day", Encode.int i)])
+          Cell d s -> ("cell", [("day", Encode.int d), ("slot", Encode.int s)])
+          Slot s   -> ("slot", [("slot", Encode.int s)])
   in
     ("scope", Encode.string scope)::vals
 
@@ -131,6 +132,6 @@ encode_datafile m =
 decode_schedules : Decode.Decoder (List (Int, List Lesson))
 decode_schedules =
   Decode.list
-    ( Decode.object2 (,)
-        ("weight" := Decode.int)
-        ("lessons" := Decode.list decode_lesson))
+    (Decode.object2 (,)
+      ("weight" := Decode.int)
+      ("lessons" := Decode.list decode_lesson))

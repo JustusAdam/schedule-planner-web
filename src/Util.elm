@@ -33,3 +33,7 @@ onEnter address value =
     on "keydown"
       (Decode.customDecoder keyCode is13)
       (\_ -> Signal.message address value)
+
+
+const : a -> b -> a
+const a1 _ = a1

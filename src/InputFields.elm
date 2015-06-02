@@ -18,6 +18,7 @@ import Task exposing (andThen, Task)
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
+
 type Action
   = NoOp
   | AddLesson
@@ -44,14 +45,16 @@ update action model =
           nlid        <- model.nlid + 1,
           lessonField <- { lf | lid <- model.nlid }
         }
-      DeleteLesson i        -> { model | lessons  <- List.filter (\t -> t.lid /= i) model.lessons }
+      DeleteLesson i        ->
+        { model | lessons  <- List.filter (\t -> t.lid /= i) model.lessons }
       AddSubject            ->
         { model |
           subjects      <- model.subjects ++ [model.subjectField],
           nsid          <- model.nsid + 1,
           subjectField  <- { sid = model.nsid, name = "" }
         }
-      DeleteSubject i       -> { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
+      DeleteSubject i       ->
+        { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
       UpdateSubjectName str -> { model | subjectField <- { sf | name <- str } }
       UpdateSubject s       -> { model | lessonField <- { lf | subject <- s } }
       UpdateDay i           -> { model | lessonField <- { lf | day <- i} }
@@ -93,7 +96,9 @@ view address model =
         [ id "lessons-area", class "small-6 columns" ]
         [ lazy2 lessonDisplay address model ]
       , a
-        ([ classList [("button", True), ("success", True), ("disabled", not enabled)] ] ++ buttonAction)
+        ([ classList
+            ````[("button", True), ("success", True), ("disabled", not enabled)] ]
+          ++ buttonAction)
         [ text ">>=" ]
       ]
 
@@ -102,7 +107,14 @@ subjectDisplay : Address Action -> Model -> Html
 subjectDisplay a m =
   div
     []
-    [ nav [] [ ul [ class "side-nav" ] (List.map (\s -> singleSubjectDisplay a s (m.lessonField.subject.sid == s.sid) ) m.subjects) ]
+    [ nav
+      []
+      [ ul
+        [ class "side-nav" ]
+        (List.map
+          (\s -> singleSubjectDisplay a s (m.lessonField.subject.sid == s.sid) )
+          m.subjects)
+      ]
     , subjectFields a m
     ]
 
@@ -155,7 +167,8 @@ subjectFields address model =
         [ class "small-2 columns" ]
         [ a
           ([ id "new-subject"
-          , classList [ ("button", True), ("postfix", True), ("disabled", not enabled) ]
+          , classList
+            [ ("button", True), ("postfix", True), ("disabled", not enabled) ]
           ] ++ buttonAction )
           [ text "+" ]
         ]
@@ -176,12 +189,17 @@ singleLessonDisplay : Address Action -> Lesson -> Html
 singleLessonDisplay address l =
   div
     [ class "lesson row" ]
-    [ div [ class "lesson-day small-3 columns" ] [ text (Maybe.withDefault "invalid" (days !! l.day)) ]
+    [ div
+      [ class "lesson-day small-3 columns" ]
+      [ text (Maybe.withDefault "invalid" (days !! l.day)) ]
     , div [ class "lesson-slot small-3 columns" ] [ text (toString l.slot) ]
     , div [ class "lesson-subject small-3 columns" ] [ text l.subject.name ]
     , div
-        [ class "lesson-delete columns small-3" ]
-        [ a [ class "button alert postfix", onClick address (DeleteLesson l.lid)] [ text "x" ] ]
+      [ class "lesson-delete columns small-3" ]
+      [ a
+        [ class "button alert postfix", onClick address (DeleteLesson l.lid)]
+        [ text "x" ]
+      ]
     ]
 
 
@@ -189,31 +207,43 @@ lessonFields : Address Action -> Model -> Html
 lessonFields a m =
   let
     enabled        = lessonIsValid m.lessonField
-    buttonAction   = if enabled then [ onClick a (AddLesson) ] else []
+
+    buttonAction   = if enabled
+                       then [ onClick a (AddLesson) ]
+                       else []
+
     updateSlot     = Signal.message a << withDefault NoOp UpdateSlot << String.toInt
     updateDay      = Signal.message a << withDefault NoOp UpdateDay << String.toInt
-    slotToOption n = let v = toString n in option [ value v ] [ text v ]
-    dayToOption n  = option [ value (toString n) ] [ text (Maybe.withDefault "invalid" (days !! n)) ]
+
+    slotToOption n = let
+                       v = toString n
+                     in
+                       option [ value v ] [ text v ]
+
+    dayToOption n  = option
+                       [ value (toString n) ]
+                       [ text (Maybe.withDefault "invalid" (days !! n)) ]
   in
     div
       [ class "row" ]
       [ div
         [ class "small-4 columns" ]
         [ select
-            [ on "input" targetValue updateSlot ]
-            (List.map slotToOption [0..9])
+          [ on "input" targetValue updateSlot ]
+          (List.map slotToOption [0..9])
         ]
       , div
         [ class "small-4 columns" ]
         [ select
-            [ on "input" targetValue updateDay ]
-            (List.map dayToOption [0..6])
+          [ on "input" targetValue updateDay ]
+          (List.map dayToOption [0..6])
         ]
       , div
         [ class "columns small-4" ]
         [ button
-            ([ classList [ ("postfix", True), ("disabled", not enabled) ] ] ++ buttonAction)
-            [ text "+" ]
+          ([ classList [ ("postfix", True), ("disabled", not enabled) ] ]
+            ++ buttonAction)
+          [ text "+" ]
         ]
       ]
 
@@ -252,7 +282,7 @@ doUpdate action model =
       Waiting       -> Task.succeed ()
       RequestUpdate ->
         Signal.send updateMailbox.address Waiting
-        `andThen` (\_ -> getData (Types.encode_datafile model))
+        `andThen` (const (getData (Types.encode_datafile model)))
         -- `andThen` (\_ -> dummyTask)
         `andThen` (Signal.send act.address << OutputFields.Update)
 
@@ -262,11 +292,15 @@ dataTask = Signal.map2 doUpdate updateMailbox.signal model
 
 
 getData : Encode.Value -> Task Http.Error (List Lesson)
-getData = Http.post (Decode.list Types.decode_lesson) recevier << Http.string << Encode.encode 0
+getData =
+  Http.post
+    (Decode.list Types.decode_lesson) recevier
+  << Http.string
+  << Encode.encode 0
 
 
 htmlSignal : Signal Html
-htmlSignal = Signal.map2 (\a b -> div [ class "row" ] [ a, b ]) (Signal.map (view actions.address) model) OutputFields.htmlSignal
+htmlSignal = Signal.map (view actions.address) model
 
 
 actions : Signal.Mailbox Action
