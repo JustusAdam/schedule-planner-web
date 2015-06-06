@@ -9,14 +9,12 @@ import Json.Encode as Encode
 import Signal exposing (Signal, Address)
 import String
 import Http
-import Types exposing (Rule, Model, Lesson, Subject, Target(..), emptyModel, emptyLesson, emptySubject)
+import Types exposing (Rule, Model, Lesson, Subject, Target(..), emptyModel, emptyLesson, emptySubject, decode_schedule)
 import Util exposing (..)
 import Html.Lazy exposing (lazy2)
 import OutputFields
 import Task exposing (andThen, Task)
-
-
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+import Foundation exposing (tooltip)
 
 
 type Action
@@ -125,23 +123,39 @@ view address model =
   let
     enabled = formReady model
     box = updateMailbox
-    buttonAction = if enabled then (::) (onClick box.address RequestUpdate) else Util.id
+    buttonAction =
+      if enabled
+        then (::) (onClick box.address RequestUpdate)
+        else (++) (tooltip "Why don't you define some lessons?")
   in
     div
       [ class "row" ]
-      [ section
-        [ Attr.id "subjects-area", class "small-6 columns" ]
-        [ lazy2 subjectDisplay address model ]
-      , section
-        [ Attr.id "lessons-area", class "small-6 columns" ]
-        [ lazy2 lessonDisplay address model ]
-      , section
-        [ Attr.id "rule-area", class "small-6 columns" ]
-        [ lazy2 ruleFields address model ]
-      , a
-        (buttonAction [ classList
-           [("button success large", True), ("disabled", not enabled)] ])
-        [ text ">>=" ]
+      [ div [ class "row" ]
+        [ div
+          [ class "column small-12" ]
+          [ section
+            [ Attr.id "subjects-area", class "small-6 columns" ]
+            [ lazy2 subjectDisplay address model ]
+          , section
+            [ Attr.id "lessons-area", class "small-6 columns" ]
+            [ lazy2 lessonDisplay address model ]
+          ]
+        ]
+      , div [ class "row" ]
+        [ div
+          [ class "column small-12" ]
+          [ section
+            [ Attr.id "rule-area", class "small-6 columns" ]
+            [ lazy2 ruleFields address model ]
+          , div
+            [ class "column small-6" ]
+            [ a
+              (buttonAction [ classList
+                 [("button success expand", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
+              [ text ">>=" ]
+            ]
+          ]
+        ]
       ]
 
 
@@ -176,9 +190,9 @@ singleSubjectDisplay address s active =
         , div
             [ class "remove-subject small-2 column" ]
             [ a
-                [ class "button alert postfix"
+                ([ class "button alert postfix has-tip"
                 , onClick address (DeleteSubject s.sid)
-                ]
+                ] ++ tooltip "You want to delete me?")
                 [ text "x" ]
             ]
         ]
@@ -188,8 +202,11 @@ singleSubjectDisplay address s active =
 subjectFields : Address Action -> Model -> Html
 subjectFields address model =
   let
-    enabled = subjectIsValid model.subjectField
-    buttonAction = if enabled then (::) (onClick address (AddSubject)) else Util.id
+    enabled      = subjectIsValid model.subjectField
+    buttonAction =
+      if enabled
+        then (::) (onClick address AddSubject)
+        else (++) (tooltip "You have to enter a name for the subject, before you can add it.")
   in
     div
       []
@@ -219,10 +236,11 @@ subjectFields address model =
         , div
           [ class "small-2 columns" ]
           [ a
-            (buttonAction [ Attr.id "new-subject"
-            , classList
-              [ ("button", True), ("postfix", True), ("disabled", not enabled) ]
-            ])
+            (buttonAction
+              [ Attr.id "new-subject"
+              , classList
+                [ ("button postfix", True), ("disabled", not enabled), ("has-tip", not enabled) ]
+              ])
             [ text "+" ]
           ]
         ]
@@ -234,7 +252,7 @@ lessonDisplay a m =
   div
     [ class "row" ]
     (if List.isEmpty m.subjects
-      then [ p [] [ text "Enter some Subjects" ] ]
+      then [ h3 [] [ text "Enter some subjects to get started" ] ]
       else [ div [ class "columns" ] (List.map (singleLessonDisplay a) m.lessons)
            , lessonFields a m
            ])
@@ -251,7 +269,7 @@ singleLessonDisplay address l =
     , div
       [ class "lesson-delete columns small-3" ]
       [ a
-        [ class "button alert postfix", onClick address (DeleteLesson l.lid)]
+        ([ class "has-tip button alert postfix", onClick address (DeleteLesson l.lid) ] ++ tooltip "Do you want to delete me?")
         [ text "x" ]
       ]
     ]
@@ -262,9 +280,10 @@ lessonFields address model =
   let
     enabled        = lessonIsValid model.lessonField
 
-    buttonAction   = if enabled
-                       then [ onClick address (AddLesson) ]
-                       else []
+    buttonAction   =
+      if enabled
+        then (::) (onClick address (AddLesson))
+        else (++) (tooltip "You should choose a subject first. It's really easy, just click on it.")
 
     updateSlot     = Signal.message address << withDefault NoOp UpdateSlot << String.toInt
     updateDay      = Signal.message address << withDefault NoOp UpdateDay << String.toInt
@@ -306,8 +325,7 @@ lessonFields address model =
         [ div
           [ class "columns small-12" ]
           [ a
-            ([ classList [ ("button expand", True), ("disabled", not enabled) ] ]
-              ++ buttonAction)
+            (buttonAction [ classList [ ("button expand", True), ("disabled", not enabled), ("has-tip", not enabled) ] ])
             [ text "+" ]
           ]
         ]
@@ -333,7 +351,7 @@ ruleField address {target, severity, rid}  =
     , div
       [ class "delete-rule columns small-3" ]
       [ a
-        [ class "alert button postfix", onClick address (DeleteRule rid) ]
+        ([ class "has-tip alert button postfix", onClick address (DeleteRule rid) ] ++ tooltip "You want to delete me?")
         [ text "x" ]
       ]
     ]
@@ -368,10 +386,10 @@ ruleInput address model =
 
     enabled = isJust model.target
 
-    buttonAction l =
+    buttonAction =
       if enabled
-        then onClick address AddRule :: l
-        else l
+        then (::) (onClick address AddRule)
+        else (++) (tooltip "You have to specify a valid target before you can press me.")
 
   in
     div
@@ -411,7 +429,7 @@ ruleInput address model =
           [ div
             [ class "column small-12" ]
             [ a
-              (buttonAction [ classList [("button success expand", True), ("disabled", not enabled)] ])
+              (buttonAction [ classList [("button success expand", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
               [ text "+" ]
             ]
           ]
@@ -465,10 +483,10 @@ dataTask : Signal (Task Http.Error ())
 dataTask = Signal.map2 doUpdate updateMailbox.signal model
 
 
-getData : Encode.Value -> Task Http.Error (List Lesson)
+getData : Encode.Value -> Task Http.Error (List (Int, List Lesson))
 getData =
   Http.post
-    (Decode.list Types.decode_lesson) recevier
+    decode_schedule recevier
   << Http.string
   << Encode.encode 0
 

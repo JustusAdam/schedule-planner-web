@@ -6,6 +6,9 @@ import Json.Decode as Decode
 import Signal exposing (Signal, Address)
 
 
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
 infixl 9 !!
 (!!) : List a -> Int -> Maybe a
 xs !! n  =
@@ -37,10 +40,6 @@ onEnter address value =
 
 const : a -> b -> a
 const a1 _ = a1
-
-
-id : a -> a
-id a = a
 
 
 isJust : Maybe a -> Bool

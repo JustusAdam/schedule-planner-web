@@ -10,6 +10,7 @@ module Types
   , encode_lesson
   , encode_datafile
   , decode_lesson
+  , decode_schedule
   ) where
 
 import Json.Decode as Decode exposing ((:=))
@@ -138,8 +139,8 @@ encode_datafile m =
       ("rules", Encode.list (List.map encode_rule m.rules))
     ]
 
-decode_schedules : Decode.Decoder (List (Int, List Lesson))
-decode_schedules =
+decode_schedule : Decode.Decoder (List (Int, List Lesson))
+decode_schedule =
   Decode.list
     (Decode.object2 (,)
       ("weight" := Decode.int)

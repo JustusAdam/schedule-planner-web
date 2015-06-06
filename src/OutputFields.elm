@@ -5,14 +5,16 @@ import Html.Attributes exposing (class)
 import Types exposing (Lesson)
 import Util exposing (..)
 import List.Extra exposing (zip)
+import Text exposing (fromString)
+import Graphics.Element exposing (leftAligned)
 
 
-type alias Model = { lessons : List Lesson }
+type alias Model = { lessons : List (Int, List Lesson) }
 
 
 type Action
   = NoOp
-  | Update (List Lesson)
+  | Update (List (Int, List Lesson))
 
 
 emptyModel : Model
@@ -28,8 +30,16 @@ update action model =
 
 view : Model -> Html
 view model =
+  div
+    []
+    (List.map (scheduleView << snd) model.lessons)
+
+
+scheduleView : List Lesson -> Html
+scheduleView lessons =
   let
-    grouped = groupBy (\l1 l2 -> l1.slot == l2.slot ) model.lessons
+    cellField a = div [ class "column small-2 text-center" ] [ a ]
+    grouped = groupBy (\l1 l2 -> l1.slot == l2.slot ) lessons
     sorted = List.sortBy (\(x::xs) -> x.day) <| List.map (List.sortBy (\l -> l.day)) grouped
     col elem ind =
       if elem.day == ind
@@ -37,24 +47,26 @@ view model =
         else "-"
 
     row l =
-      List.reverse [0..10] |>
+      List.reverse [0..5] |>
       List.foldr
         (\index l ->
           let
             (n, y) = l
+            space = ""
           in
             case y of
-              [] -> ("&nbsp;"::n, y)
+              [] -> (space::n, y)
               (x::xs) ->
                 if x.day == index
                   then (x.subject.name::n, xs)
-                  else ("&nbsp;"::n, y))
+                  else (space ::n, y))
         ([], l) |>
       fst
   in
-    div
-      []
-      (List.map ((div [ class "row" ] << List.map (\a -> div [ class "column small-2" ] [ text a ]) ) << row) sorted)
+    table
+      [ class "column small-12" ]
+      (hr [] (List.map (th [ class "column small-2 text-center" ] << (flip (::)[]) << text) (List.take 6 days)) ::
+      List.map ((tr [] << List.map (cellField << text) ) << row) sorted)
 
 -- SIGNALS
 
