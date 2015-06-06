@@ -3,7 +3,7 @@ module Types
   , Model
   , Subject
   , Rule
-  , Target(..)
+  , Target
   , emptyModel
   , emptyLesson
   , emptySubject
@@ -26,7 +26,7 @@ type alias Model =
   , nlid              : Int
   , nrid              : Int
   , rules             : List Rule
-  , target            : Maybe Target
+  , target            : Target
   , currentSeverity   : Int
   }
 
@@ -52,7 +52,11 @@ type alias Rule =
   }
 
 
-type Target = Cell Int Int | Slot Int | Day Int
+type alias Target =
+  { scope : String
+  , day   : Int
+  , slot  : Int
+  }
 
 
 -- INITIALIZERS
@@ -68,7 +72,7 @@ emptyModel =
   , nlid              = 1
   , nrid              = 0
   , rules             = []
-  , target            = Nothing
+  , target            = { scope = "", day = 0, slot = 0 }
   , currentSeverity   = 0
   }
 
@@ -111,25 +115,18 @@ encode_lesson l =
     ]
 
 
-encode_target : Target -> Encode.Value
-encode_target = Encode.object << target_encoding_list
-
-
-target_encoding_list : Target -> List (String, Encode.Value)
-target_encoding_list t =
-  let
-    (scope, vals) = case t of
-          Day i    -> ("day", [("day", Encode.int i)])
-          Cell d s -> ("cell", [("day", Encode.int d), ("slot", Encode.int s)])
-          Slot s   -> ("slot", [("slot", Encode.int s)])
-  in
-    ("scope", Encode.string scope)::vals
+encode_target : Target -> List (String, Encode.Value)
+encode_target { scope, day, slot } =
+  [ ("scope",  Encode.string scope)
+  , ("day", Encode.int day)
+  , ("slot", Encode.int slot)
+  ]
 
 
 encode_rule : Rule -> Encode.Value
 encode_rule { target, severity } =
   Encode.object
-    (("severity", Encode.int severity)::target_encoding_list target)
+    (("severity", Encode.int severity)::encode_target target)
 
 
 encode_datafile : Model -> Encode.Value

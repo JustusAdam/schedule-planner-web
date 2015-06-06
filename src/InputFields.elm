@@ -1,4 +1,10 @@
-module InputFields (htmlSignal, dataTask) where
+module InputFields
+  ( doUpdate
+  , updateMailbox
+  , actions
+  , update
+  , htmlSignal
+  ) where
 
 
 import Html exposing (..)
@@ -9,7 +15,7 @@ import Json.Encode as Encode
 import Signal exposing (Signal, Address)
 import String
 import Http
-import Types exposing (Rule, Model, Lesson, Subject, Target(..), emptyModel, emptyLesson, emptySubject, decode_schedule)
+import Types exposing (Rule, Model, Lesson, Subject, Target, emptyModel, emptyLesson, emptySubject, decode_schedule)
 import Util exposing (..)
 import Html.Lazy exposing (lazy2)
 import OutputFields
@@ -41,17 +47,9 @@ update action model =
     sf = model.subjectField
     lf = model.lessonField
 
-    updateRuleSlot value target =
-      case target of
-        Cell d _ -> Cell d value
-        Slot _   -> Slot value
-        _        -> target
+    updateRuleSlot value target = { target | slot <- value }
 
-    updateRuleDay value target =
-      case target of
-        Cell _ s -> Cell value s
-        Day _    -> Day value
-        _        -> target
+    updateRuleDay value target = { target | day <- value }
 
   in
     case action of
@@ -73,29 +71,29 @@ update action model =
       DeleteSubject i       ->
         { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
       AddRule               ->
-        Maybe.withDefault model <| Maybe.map
-        (\a ->
-          let
-            newRule = { rid = model.nrid, target = a, severity = model.currentSeverity }
-          in
-            { model |
-              rules <- newRule :: model.rules,
-              nrid <- model.nrid + 1
-            }) model.target
+        if targetIsValid model.target
+          then
+            let
+              newRule = { rid = model.nrid, target = model.target, severity = model.currentSeverity }
+            in
+              { model |
+                rules <- newRule :: model.rules,
+                nrid <- model.nrid + 1
+              }
+          else model
       DeleteRule i          -> { model | rules <- List.filter (\r -> r.rid /= i) model.rules }
       UpdateSubjectName str -> { model | subjectField <- { sf | name <- str } }
       UpdateSubject s       -> { model | lessonField <- { lf | subject <- s } }
       UpdateDay i           -> { model | lessonField <- { lf | day <- i} }
       UpdateSlot i          -> { model | lessonField <- { lf | slot <- i} }
-      UpdateRuleDay v       -> { model | target <- Maybe.map (updateRuleDay v) model.target }
-      UpdateRuleSlot v      -> { model | target <- Maybe.map (updateRuleSlot v) model.target }
+      UpdateRuleDay v       -> { model | target <- updateRuleDay v model.target }
+      UpdateRuleSlot v      -> { model | target <- updateRuleSlot v model.target }
       UpdateRuleTarget t    ->
-        case t of
-          "Cell"  -> { model | target <- Just (Cell 0 0) }
-          "Day"   -> { model | target <- Just (Day 0) }
-          "Slot"  -> { model | target <- Just (Slot 0) }
-          "None"  -> { model | target <- Nothing  }
-          _       -> model
+        let
+          oldTarget = model.target
+        in
+          { model | target <- { oldTarget | scope <- t } }
+
       UpdateSeverity v      -> { model | currentSeverity <- v }
 
 
@@ -115,6 +113,13 @@ formReady m =
   not (List.isEmpty m.subjects || List.isEmpty m.lessons)
 
 
+validTargetValues = [ "cell", "day", "slot" ]
+
+
+targetIsValid : Target -> Bool
+targetIsValid = flip List.member validTargetValues << .scope
+
+
 -- VIEW
 
 
@@ -131,15 +136,12 @@ view address model =
     div
       [ class "row" ]
       [ div [ class "row" ]
-        [ div
-          [ class "column small-12" ]
-          [ section
-            [ Attr.id "subjects-area", class "small-6 columns" ]
-            [ lazy2 subjectDisplay address model ]
-          , section
-            [ Attr.id "lessons-area", class "small-6 columns" ]
-            [ lazy2 lessonDisplay address model ]
-          ]
+        [ section
+          [ Attr.id "subjects-area", class "small-6 columns" ]
+          [ lazy2 subjectDisplay address model ]
+        , section
+          [ Attr.id "lessons-area", class "small-6 columns" ]
+          [ lazy2 lessonDisplay address model ]
         ]
       , div [ class "row" ]
         [ div
@@ -342,14 +344,14 @@ ruleFields address model =
 
 
 ruleField : Address Action -> Rule -> Html
-ruleField address {target, severity, rid}  =
+ruleField address { target, severity, rid }  =
   div
     [ class "row" ]
     [ div
       [ class "rule columns small-9" ]
-      [ text ("Rule for " ++ targetToString target ++ " with a weight of " ++ toString severity) ]
+      [ p [] [text ("Rule for " ++ targetToString target ++ " with a weight of " ++ toString severity) ] ]
     , div
-      [ class "delete-rule columns small-3" ]
+      [ class "delete-rule columns small-2" ]
       [ a
         ([ class "has-tip alert button postfix", onClick address (DeleteRule rid) ] ++ tooltip "You want to delete me?")
         [ text "x" ]
@@ -384,7 +386,7 @@ ruleInput address model =
                   (List.map (\a -> option [] [ text <| toString a ]) [0..10])
                 ]
 
-    enabled = isJust model.target
+    enabled = List.member model.target.scope ["scope", "cell", "day"]
 
     buttonAction =
       if enabled
@@ -403,16 +405,14 @@ ruleInput address model =
             [ text "Select Target" ]
           , select
             [ Attr.id "update-target",  on "input" targetValue updateTarget ]
-            (List.map (\a -> option [ value a ] [ text a ]) [ "None", "Cell", "Day", "Slot" ])
+            (List.map (\a -> option [ value <| String.toLower a ] [ text a ]) [ "None", "Cell", "Day", "Slot" ])
           ]
         ] ++
-          (case model.target of
-            Nothing -> []
-            Just targ ->
-              case targ of
-                Cell _ _ -> [uDayIn, uSlotIn]
-                Day _ -> [uDayIn]
-                Slot _ -> [uSlotIn])
+          (case model.target.scope of
+            "cell" -> [uDayIn, uSlotIn]
+            "day"  -> [uDayIn]
+            "slot" -> [uSlotIn]
+            _      -> [])
           ++  [ div
                 [ class "columns small-6" ]
                 [ label
@@ -433,15 +433,16 @@ ruleInput address model =
               [ text "+" ]
             ]
           ]
-      ]
+        ]
 
 
 targetToString : Types.Target -> String
-targetToString target =
-  case target of
-    Types.Cell a b -> "Cell on " ++ (Maybe.withDefault "invalid" <| days !! a) ++ " in slot " ++ toString b
-    Types.Day d    -> "Day " ++ (Maybe.withDefault "invalid" <| days !! d)
-    Types.Slot s   -> "Slot " ++ toString s
+targetToString { scope, day, slot } =
+  case scope of
+    "cell" -> "Cell on " ++ (Maybe.withDefault "invalid" <| days !! day) ++ " in slot " ++ toString slot
+    "day"  -> "Day " ++ (Maybe.withDefault "invalid" <| days !! day)
+    "slot" -> "Slot " ++ toString slot
+    _      -> "invalid"
 
 
 -- SIGNALS
@@ -479,10 +480,6 @@ doUpdate action model =
         `andThen` (Signal.send act.address << OutputFields.Update)
 
 
-dataTask : Signal (Task Http.Error ())
-dataTask = Signal.map2 doUpdate updateMailbox.signal model
-
-
 getData : Encode.Value -> Task Http.Error (List (Int, List Lesson))
 getData =
   Http.post
@@ -491,19 +488,10 @@ getData =
   << Encode.encode 0
 
 
-htmlSignal : Signal Html
-htmlSignal = Signal.map (view actions.address) model
+htmlSignal : Signal Model -> Signal Html
+htmlSignal = Signal.map (view actions.address)
 
 
 actions : Signal.Mailbox Action
 actions =
   Signal.mailbox NoOp
-
-
-model : Signal Model
-model =
-  Signal.foldp update initialModel actions.signal
-
-
-initialModel : Model
-initialModel = emptyModel

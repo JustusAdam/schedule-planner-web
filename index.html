@@ -15,7 +15,13 @@
       </div>
     </div>
     <script type="text/javascript">
-      Elm.fullscreen(Elm.Main, {  });
+    var storedState = localStorage.getItem('schedule-planner-state');
+    var startingState = storedState ? JSON.parse(storedState) : null;
+    var schedulePlanner = Elm.fullscreen(Elm.Main, { getStorage: startingState });
+
+    schedulePlanner.ports.setStorage.subscribe(function(state) {
+        localStorage.setItem('schedule-planner-state', JSON.stringify(state));
+    });
     </script>
 
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
