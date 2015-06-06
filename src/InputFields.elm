@@ -2,14 +2,14 @@ module InputFields (htmlSignal, dataTask) where
 
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html.Attributes as Attr exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing ((:=))
 import Json.Encode as Encode
 import Signal exposing (Signal, Address)
 import String
 import Http
-import Types exposing (Model, Lesson, Subject, emptyModel, emptyLesson, emptySubject)
+import Types exposing (Rule, Model, Lesson, Subject, Target(..), emptyModel, emptyLesson, emptySubject)
 import Util exposing (..)
 import Html.Lazy exposing (lazy2)
 import OutputFields
@@ -29,6 +29,12 @@ type Action
   | UpdateSubject Subject
   | UpdateSlot Int
   | UpdateDay Int
+  | AddRule
+  | UpdateRuleSlot Int
+  | UpdateRuleDay Int
+  | UpdateRuleTarget String
+  | DeleteRule Int
+  | UpdateSeverity Int
 
 
 update : Action -> Model -> Model
@@ -36,12 +42,25 @@ update action model =
   let
     sf = model.subjectField
     lf = model.lessonField
+
+    updateRuleSlot value target =
+      case target of
+        Cell d _ -> Cell d value
+        Slot _   -> Slot value
+        _        -> target
+
+    updateRuleDay value target =
+      case target of
+        Cell _ s -> Cell value s
+        Day _    -> Day value
+        _        -> target
+
   in
     case action of
       NoOp                  -> model
       AddLesson             ->
         { model |
-          lessons     <- model.lessons ++ [model.lessonField],
+          lessons     <- model.lessonField :: model.lessons,
           nlid        <- model.nlid + 1,
           lessonField <- { lf | lid <- model.nlid }
         }
@@ -49,16 +68,37 @@ update action model =
         { model | lessons  <- List.filter (\t -> t.lid /= i) model.lessons }
       AddSubject            ->
         { model |
-          subjects      <- model.subjects ++ [model.subjectField],
+          subjects      <- model.subjectField :: model.subjects,
           nsid          <- model.nsid + 1,
           subjectField  <- { sid = model.nsid, name = "" }
         }
       DeleteSubject i       ->
         { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
+      AddRule               ->
+        Maybe.withDefault model <| Maybe.map
+        (\a ->
+          let
+            newRule = { rid = model.nrid, target = a, severity = model.currentSeverity }
+          in
+            { model |
+              rules <- newRule :: model.rules,
+              nrid <- model.nrid + 1
+            }) model.target
+      DeleteRule i          -> { model | rules <- List.filter (\r -> r.rid /= i) model.rules }
       UpdateSubjectName str -> { model | subjectField <- { sf | name <- str } }
       UpdateSubject s       -> { model | lessonField <- { lf | subject <- s } }
       UpdateDay i           -> { model | lessonField <- { lf | day <- i} }
       UpdateSlot i          -> { model | lessonField <- { lf | slot <- i} }
+      UpdateRuleDay v       -> { model | target <- Maybe.map (updateRuleDay v) model.target }
+      UpdateRuleSlot v      -> { model | target <- Maybe.map (updateRuleSlot v) model.target }
+      UpdateRuleTarget t    ->
+        case t of
+          "Cell"  -> { model | target <- Just (Cell 0 0) }
+          "Day"   -> { model | target <- Just (Day 0) }
+          "Slot"  -> { model | target <- Just (Slot 0) }
+          "None"  -> { model | target <- Nothing  }
+          _       -> model
+      UpdateSeverity v      -> { model | currentSeverity <- v }
 
 
 -- VERIFIERS
@@ -85,20 +125,22 @@ view address model =
   let
     enabled = formReady model
     box = updateMailbox
-    buttonAction = if enabled then [onClick box.address RequestUpdate] else []
+    buttonAction = if enabled then (::) (onClick box.address RequestUpdate) else Util.id
   in
     div
       [ class "row" ]
-      [ div
-        [ id "subjects-area", class "small-6 columns" ]
+      [ section
+        [ Attr.id "subjects-area", class "small-6 columns" ]
         [ lazy2 subjectDisplay address model ]
-      , div
-        [ id "lessons-area", class "small-6 columns" ]
+      , section
+        [ Attr.id "lessons-area", class "small-6 columns" ]
         [ lazy2 lessonDisplay address model ]
+      , section
+        [ Attr.id "rule-area", class "small-6 columns" ]
+        [ lazy2 ruleFields address model ]
       , a
-        ([ classList
-            ````[("button", True), ("success", True), ("disabled", not enabled)] ]
-          ++ buttonAction)
+        (buttonAction [ classList
+           [("button success large", True), ("disabled", not enabled)] ])
         [ text ">>=" ]
       ]
 
@@ -134,7 +176,7 @@ singleSubjectDisplay address s active =
         , div
             [ class "remove-subject small-2 column" ]
             [ a
-                [ class "button alert small"
+                [ class "button alert postfix"
                 , onClick address (DeleteSubject s.sid)
                 ]
                 [ text "x" ]
@@ -147,30 +189,42 @@ subjectFields : Address Action -> Model -> Html
 subjectFields address model =
   let
     enabled = subjectIsValid model.subjectField
-    buttonAction = if enabled then [ onClick address (AddSubject) ] else []
+    buttonAction = if enabled then (::) (onClick address (AddSubject)) else Util.id
   in
     div
-      [ id "subject-inputs", class "row collapse" ]
+      []
       [ div
-        [ class "small-10 column" ]
-        [ input
-          [ id "subject-name"
-          , placeholder "Enter a Subject"
-          , type' "text"
-          , name "subject-name"
-          , on "input" targetValue (Signal.message address << UpdateSubjectName)
-          , onEnter address AddSubject
+        [ class "row" ]
+        [ div
+          [ class "columns asmall-12" ]
+          [ label
+            [ for "subject-name" ]
+            [ text "Add subjects" ]
           ]
-          [ text model.subjectField.name ]
         ]
       , div
-        [ class "small-2 columns" ]
-        [ a
-          ([ id "new-subject"
-          , classList
-            [ ("button", True), ("postfix", True), ("disabled", not enabled) ]
-          ] ++ buttonAction )
-          [ text "+" ]
+        [ Attr.id "subject-inputs", class "row collapse" ]
+        [ div
+          [ class "small-10 column" ]
+          [ input
+            [ Attr.id "subject-name"
+            , placeholder "Enter a Subject"
+            , type' "text"
+            , name "subject-name"
+            , on "input" targetValue (Signal.message address << UpdateSubjectName)
+            , onEnter address AddSubject
+            ]
+            [ text model.subjectField.name ]
+          ]
+        , div
+          [ class "small-2 columns" ]
+          [ a
+            (buttonAction [ Attr.id "new-subject"
+            , classList
+              [ ("button", True), ("postfix", True), ("disabled", not enabled) ]
+            ])
+            [ text "+" ]
+          ]
         ]
       ]
 
@@ -204,16 +258,16 @@ singleLessonDisplay address l =
 
 
 lessonFields : Address Action -> Model -> Html
-lessonFields a m =
+lessonFields address model =
   let
-    enabled        = lessonIsValid m.lessonField
+    enabled        = lessonIsValid model.lessonField
 
     buttonAction   = if enabled
-                       then [ onClick a (AddLesson) ]
+                       then [ onClick address (AddLesson) ]
                        else []
 
-    updateSlot     = Signal.message a << withDefault NoOp UpdateSlot << String.toInt
-    updateDay      = Signal.message a << withDefault NoOp UpdateDay << String.toInt
+    updateSlot     = Signal.message address << withDefault NoOp UpdateSlot << String.toInt
+    updateDay      = Signal.message address << withDefault NoOp UpdateDay << String.toInt
 
     slotToOption n = let
                        v = toString n
@@ -225,31 +279,151 @@ lessonFields a m =
                        [ text (Maybe.withDefault "invalid" (days !! n)) ]
   in
     div
-      [ class "row" ]
+      []
       [ div
-        [ class "small-4 columns" ]
-        [ select
-          [ on "input" targetValue updateSlot ]
-          (List.map slotToOption [0..9])
+        [ class "row" ]
+        [ div
+          [ class "small-4 columns" ]
+          [ label
+            [ for "update-slot" ]
+            [ text "Enter Slot" ]
+          , select
+            [ Attr.id "update-slot", on "input" targetValue updateSlot ]
+            (List.map slotToOption [0..9])
+          ]
+        , div
+          [ class "small-4 columns" ]
+          [ label
+            [ for "update-day" ]
+            [ text "Enter Day" ]
+          , select
+            [ Attr.id "update-day", on "input" targetValue updateDay ]
+            (List.map dayToOption [0..6])
+          ]
         ]
       , div
-        [ class "small-4 columns" ]
-        [ select
-          [ on "input" targetValue updateDay ]
-          (List.map dayToOption [0..6])
-        ]
-      , div
-        [ class "columns small-4" ]
-        [ button
-          ([ classList [ ("postfix", True), ("disabled", not enabled) ] ]
-            ++ buttonAction)
-          [ text "+" ]
+        [ class "row" ]
+        [ div
+          [ class "columns small-12" ]
+          [ a
+            ([ classList [ ("button expand", True), ("disabled", not enabled) ] ]
+              ++ buttonAction)
+            [ text "+" ]
+          ]
         ]
       ]
 
 
 subToOption : Subject -> Html
 subToOption s = option [ value (toString s.sid) ] [ text s.name ]
+
+
+ruleFields : Address Action -> Model -> Html
+ruleFields address model =
+  div [] (List.map (ruleField address) model.rules ++ [ruleInput address model])
+
+
+ruleField : Address Action -> Rule -> Html
+ruleField address {target, severity, rid}  =
+  div
+    [ class "row" ]
+    [ div
+      [ class "rule columns small-9" ]
+      [ text ("Rule for " ++ targetToString target ++ " with a weight of " ++ toString severity) ]
+    , div
+      [ class "delete-rule columns small-3" ]
+      [ a
+        [ class "alert button postfix", onClick address (DeleteRule rid) ]
+        [ text "x" ]
+      ]
+    ]
+
+
+ruleInput : Address Action -> Model -> Html
+ruleInput address model =
+  let
+    toOption i = option [ value (toString i) ] [ text <| Maybe.withDefault "invalid" (days !! i) ]
+    updateTarget = Signal.message address << UpdateRuleTarget
+    updateDay = Signal.message address << withDefault NoOp UpdateRuleDay << String.toInt
+    updateSlot = Signal.message address << withDefault NoOp UpdateRuleSlot << String.toInt
+    updateSeverity = Signal.message address << withDefault NoOp UpdateSeverity << String.toInt
+    uDayIn = div
+              [ class "columns small-6" ]
+              [ label
+                [ for "update-rule-day" ]
+                [ text "Target Day" ]
+              , select
+                [ Attr.id "update-rule-day", on "input" targetValue updateDay ]
+                (List.map toOption [0..List.length days])
+              ]
+    uSlotIn = div
+                [ class "small-6 columns" ]
+                [ label
+                  [ for "update-rule-slot" ]
+                  [ text "Target Slot" ]
+                , select
+                  [ Attr.id "update-rule-slot", on "input" targetValue updateSlot ]
+                  (List.map (\a -> option [] [ text <| toString a ]) [0..10])
+                ]
+
+    enabled = isJust model.target
+
+    buttonAction l =
+      if enabled
+        then onClick address AddRule :: l
+        else l
+
+  in
+    div
+      []
+      [ div
+        [ class "row" ]
+        ([ div
+          [ class "columns small-6" ]
+          [ label
+            [ for "update-target" ]
+            [ text "Select Target" ]
+          , select
+            [ Attr.id "update-target",  on "input" targetValue updateTarget ]
+            (List.map (\a -> option [ value a ] [ text a ]) [ "None", "Cell", "Day", "Slot" ])
+          ]
+        ] ++
+          (case model.target of
+            Nothing -> []
+            Just targ ->
+              case targ of
+                Cell _ _ -> [uDayIn, uSlotIn]
+                Day _ -> [uDayIn]
+                Slot _ -> [uSlotIn])
+          ++  [ div
+                [ class "columns small-6" ]
+                [ label
+                  [ for "update-severity" ]
+                  [ text "Select Rule impact" ]
+                , select
+                  [ Attr.id "update-severity", on "input" targetValue updateSeverity ]
+                  (List.map ((\a -> option [ value a ] [text a]) << toString) [0..10])
+                ]
+              ]
+            )
+        , div
+          [ class "row" ]
+          [ div
+            [ class "column small-12" ]
+            [ a
+              (buttonAction [ classList [("button success expand", True), ("disabled", not enabled)] ])
+              [ text "+" ]
+            ]
+          ]
+      ]
+
+
+targetToString : Types.Target -> String
+targetToString target =
+  case target of
+    Types.Cell a b -> "Cell on " ++ (Maybe.withDefault "invalid" <| days !! a) ++ " in slot " ++ toString b
+    Types.Day d    -> "Day " ++ (Maybe.withDefault "invalid" <| days !! d)
+    Types.Slot s   -> "Slot " ++ toString s
 
 
 -- SIGNALS

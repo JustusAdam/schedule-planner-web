@@ -2,6 +2,8 @@ module Types
   ( Lesson
   , Model
   , Subject
+  , Rule
+  , Target(..)
   , emptyModel
   , emptyLesson
   , emptySubject
@@ -21,7 +23,10 @@ type alias Model =
   , subjectField      : Subject
   , nsid              : Int
   , nlid              : Int
+  , nrid              : Int
   , rules             : List Rule
+  , target            : Maybe Target
+  , currentSeverity   : Int
   }
 
 
@@ -42,6 +47,7 @@ type alias Subject =
 type alias Rule =
   { target   : Target
   , severity : Int
+  , rid      : Int
   }
 
 
@@ -59,7 +65,10 @@ emptyModel =
   , subjectField      = emptySubject
   , nsid              = 1
   , nlid              = 1
+  , nrid              = 0
   , rules             = []
+  , target            = Nothing
+  , currentSeverity   = 0
   }
 
 
@@ -117,7 +126,7 @@ target_encoding_list t =
 
 
 encode_rule : Rule -> Encode.Value
-encode_rule { target, severity} =
+encode_rule { target, severity } =
   Encode.object
     (("severity", Encode.int severity)::target_encoding_list target)
 

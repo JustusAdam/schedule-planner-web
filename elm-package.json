@@ -7,7 +7,8 @@
     "dependencies": {
       "elm-lang/core": "2.0.0 <= v < 3.0.0",
       "evancz/elm-html": "3.0.0 <= v < 4.0.0",
-      "evancz/elm-http": "1.0.0 <= v < 2.0.0"
+      "evancz/elm-http": "1.0.0 <= v < 2.0.0",
+      "circuithub/elm-list-extra" : "3.0.0 <= v <= 4.0.0"
     },
     "exposed-modules": [],
     "version": "1.0.0",

@@ -37,3 +37,33 @@ onEnter address value =
 
 const : a -> b -> a
 const a1 _ = a1
+
+
+id : a -> a
+id a = a
+
+
+isJust : Maybe a -> Bool
+isJust m =
+  case m of
+    Nothing -> False
+    Just _ -> True
+
+
+groupBy : (a -> a -> Bool) -> List a -> List (List a)
+groupBy eq l =
+  case l of
+    [] -> []
+    (x::xs) ->
+      let
+        (ys,zs) = span (eq x) xs
+      in (x::ys) :: groupBy eq zs
+
+span : (a -> Bool) -> List a -> (List a, List a)
+span p xs =
+  case xs of
+    [] -> (xs, xs)
+    (x::xs') ->
+      if p x
+        then let (ys,zs) = span p xs' in (x::ys,zs)
+        else ([],xs)
