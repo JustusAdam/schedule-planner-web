@@ -23,7 +23,7 @@ import Task exposing (andThen, Task)
 import Foundation exposing (tooltip)
 
 
-recevier = "justusad.octans.uberspace.de:63013"
+recevier = "http://justusad.octans.uberspace.de:63013"
 
 
 type Action
