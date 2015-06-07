@@ -23,7 +23,7 @@ import Task exposing (andThen, Task)
 import Foundation exposing (tooltip)
 
 
-recevier = "http://justusad.octans.uberspace.de:7097"
+recevier = "localhost:7097"
 
 
 type Action
@@ -42,6 +42,10 @@ type Action
   | UpdateRuleTarget String
   | DeleteRule Int
   | UpdateSeverity Int
+  | DeleteAllLessons
+  | DeleteAllRules
+  | DeleteAllSubjects
+  | DeleteAll
 
 
 type RequestAction = Waiting | RequestUpdate
@@ -75,7 +79,10 @@ update action model =
           subjectField  <- { sid = model.nsid, name = "" }
         }
       DeleteSubject i       ->
-        { model | subjects <- List.filter (\t -> t.sid /= i) model.subjects }
+        { model |
+          subjects <- List.filter (\t -> t.sid /= i) model.subjects,
+          lessons  <- List.filter (\t -> t.subject.sid /= i) model.lessons
+        }
       AddRule               ->
         if targetIsValid model.target
           then
@@ -99,8 +106,15 @@ update action model =
           oldTarget = model.target
         in
           { model | target <- { oldTarget | scope <- t } }
-
       UpdateSeverity v      -> { model | currentSeverity <- v }
+      DeleteAllLessons      -> { model | lessons <- [] }
+      DeleteAllRules        -> { model | rules <- [] }
+      DeleteAllSubjects     ->
+        { model |
+          subjects <- [],
+          lessons <- []
+        }
+      DeleteAll             -> emptyModel
 
 
 -- VERIFIERS
@@ -168,19 +182,25 @@ view address model =
 
 
 subjectDisplay : Address Action -> Model -> Html
-subjectDisplay a m =
-  div
-    []
-    [ nav
+subjectDisplay address m =
+  let
+    deleteAllSubjectsButton =
+      if List.isEmpty m.subjects
+        then identity
+        else (::) (a [ class "button alert expand", onClick address DeleteAllSubjects ] [ text "delete all" ])
+  in
+    div
       []
-      [ ul
-        [ class "side-nav" ]
-        (List.map
-          (\s -> singleSubjectDisplay a s (m.lessonField.subject.sid == s.sid) )
-          m.subjects)
+      [ nav
+        []
+        (deleteAllSubjectsButton [ ul
+          [ class "side-nav" ]
+          (List.map
+            (\s -> singleSubjectDisplay address s (m.lessonField.subject.sid == s.sid) )
+            m.subjects)
+        ])
+      , subjectFields address m
       ]
-    , subjectFields a m
-    ]
 
 
 singleSubjectDisplay : Address Action -> Subject -> Bool -> Html
@@ -256,14 +276,23 @@ subjectFields address model =
 
 
 lessonDisplay : Address Action -> Model -> Html
-lessonDisplay a m =
+lessonDisplay address m =
+  let
+    deleteAllLessonsButton =
+      if List.isEmpty m.lessons
+        then identity
+        else (::) (a [ class "button alert expand", onClick address DeleteAllLessons ] [ text "delete all lessons" ])
+  in
   div
     [ class "row" ]
     (if List.isEmpty m.subjects
       then [ h3 [] [ text "Enter some subjects to get started" ] ]
-      else [ div [ class "columns" ] (List.map (singleLessonDisplay a) m.lessons)
-           , lessonFields a m
-           ])
+      else
+        [ div
+          [ class "columns" ]
+          (deleteAllLessonsButton (List.map (singleLessonDisplay address) m.lessons))
+        , lessonFields address m
+        ])
 
 singleLessonDisplay : Address Action -> Lesson -> Html
 singleLessonDisplay address l =
@@ -346,7 +375,13 @@ subToOption s = option [ value (toString s.sid) ] [ text s.name ]
 
 ruleFields : Address Action -> Model -> Html
 ruleFields address model =
-  div [] (List.map (ruleField address) model.rules ++ [ruleInput address model])
+  let
+    deleteAllRulesButton =
+      if List.isEmpty model.rules
+        then identity
+        else (::) (a [ class "button alert expand", onClick address DeleteAllRules ] [ text "delete all rules" ])
+  in
+    div [] (deleteAllRulesButton (List.map (ruleField address) model.rules ++ [ruleInput address model]))
 
 
 ruleField : Address Action -> Rule -> Html
@@ -399,6 +434,10 @@ ruleInput address model =
         then (::) (onClick address AddRule)
         else (++) (tooltip "You have to specify a valid target before you can press me.")
 
+    scopeToOption a =
+      option
+        [ selected (a == model.target.scope), value <| String.toLower a ]
+        [ text a ]
   in
     div
       []
@@ -411,7 +450,7 @@ ruleInput address model =
             [ text "Select Target" ]
           , select
             [ Attr.id "update-target",  on "input" targetValue updateTarget ]
-            (List.map (\a -> option [ value <| String.toLower a ] [ text a ]) [ "None", "Cell", "Day", "Slot" ])
+            (List.map scopeToOption [ "None", "Cell", "Day", "Slot" ])
           ]
         ] ++
           (case model.target.scope of
