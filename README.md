@@ -2,6 +2,8 @@
 
 Sources for the frontend code for the schedule-planner tool.
 
+**The site is live** [here](http://justus.science/schedule-planner-web/)
+
 ## Install
 
 This project builds on
