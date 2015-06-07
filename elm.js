@@ -4118,6 +4118,21 @@ Elm.InputFields.make = function (_elm) {
                                    ,name: ""
                                    ,sid: model.nsid}]],
                  model);
+               case "DeleteAll":
+               return $Types.emptyModel;
+               case "DeleteAllLessons":
+               return _U.replace([["lessons"
+                                  ,_L.fromArray([])]],
+                 model);
+               case "DeleteAllRules":
+               return _U.replace([["rules"
+                                  ,_L.fromArray([])]],
+                 model);
+               case "DeleteAllSubjects":
+               return _U.replace([["subjects"
+                                  ,_L.fromArray([])]
+                                 ,["lessons",_L.fromArray([])]],
+                 model);
                case "DeleteLesson":
                return _U.replace([["lessons"
                                   ,A2($List.filter,
@@ -4143,7 +4158,14 @@ Elm.InputFields.make = function (_elm) {
                                      return !_U.eq(t.sid,
                                      action._0);
                                   },
-                                  model.subjects)]],
+                                  model.subjects)]
+                                 ,["lessons"
+                                  ,A2($List.filter,
+                                  function (t) {
+                                     return !_U.eq(t.subject.sid,
+                                     action._0);
+                                  },
+                                  model.lessons)]],
                  model);
                case "NoOp": return model;
                case "UpdateDay":
@@ -4195,13 +4217,17 @@ Elm.InputFields.make = function (_elm) {
                                   sf)]],
                  model);}
             _U.badCase($moduleName,
-            "between lines 61 and 103");
+            "between lines 65 and 117");
          }();
       }();
    });
    var RequestUpdate = {ctor: "RequestUpdate"};
    var Waiting = {ctor: "Waiting"};
    var updateMailbox = $Signal.mailbox(Waiting);
+   var DeleteAll = {ctor: "DeleteAll"};
+   var DeleteAllSubjects = {ctor: "DeleteAllSubjects"};
+   var DeleteAllRules = {ctor: "DeleteAllRules"};
+   var DeleteAllLessons = {ctor: "DeleteAllLessons"};
    var UpdateSeverity = function (a) {
       return {ctor: "UpdateSeverity"
              ,_0: a};
@@ -4393,24 +4419,37 @@ Elm.InputFields.make = function (_elm) {
                                    _L.fromArray([$Html.text("+")]))]))]))]));
       }();
    });
-   var subjectDisplay = F2(function (a,
+   var subjectDisplay = F2(function (address,
    m) {
-      return A2($Html.div,
-      _L.fromArray([]),
-      _L.fromArray([A2($Html.nav,
-                   _L.fromArray([]),
-                   _L.fromArray([A2($Html.ul,
-                   _L.fromArray([$Html$Attributes.$class("side-nav")]),
-                   A2($List.map,
-                   function (s) {
-                      return A3(singleSubjectDisplay,
-                      a,
-                      s,
-                      _U.eq(m.lessonField.subject.sid,
-                      s.sid));
-                   },
-                   m.subjects))]))
-                   ,A2(subjectFields,a,m)]));
+      return function () {
+         var deleteAllSubjectsButton = $List.isEmpty(m.subjects) ? $Basics.identity : F2(function (x,
+         y) {
+            return A2($List._op["::"],
+            x,
+            y);
+         })(A2($Html.a,
+         _L.fromArray([$Html$Attributes.$class("button alert expand")
+                      ,A2($Html$Events.onClick,
+                      address,
+                      DeleteAllSubjects)]),
+         _L.fromArray([$Html.text("delete all")])));
+         return A2($Html.div,
+         _L.fromArray([]),
+         _L.fromArray([A2($Html.nav,
+                      _L.fromArray([]),
+                      deleteAllSubjectsButton(_L.fromArray([A2($Html.ul,
+                      _L.fromArray([$Html$Attributes.$class("side-nav")]),
+                      A2($List.map,
+                      function (s) {
+                         return A3(singleSubjectDisplay,
+                         address,
+                         s,
+                         _U.eq(m.lessonField.subject.sid,
+                         s.sid));
+                      },
+                      m.subjects))])))
+                      ,A2(subjectFields,address,m)]));
+      }();
    });
    var AddLesson = {ctor: "AddLesson"};
    var NoOp = {ctor: "NoOp"};
@@ -4507,24 +4546,44 @@ Elm.InputFields.make = function (_elm) {
                       _L.fromArray([$Html.text("+")]))]))]))]));
       }();
    });
-   var lessonDisplay = F2(function (a,
+   var lessonDisplay = F2(function (address,
    m) {
-      return A2($Html.div,
-      _L.fromArray([$Html$Attributes.$class("row")]),
-      $List.isEmpty(m.subjects) ? _L.fromArray([A2($Html.h3,
-      _L.fromArray([]),
-      _L.fromArray([$Html.text("Enter some subjects to get started")]))]) : _L.fromArray([A2($Html.div,
-                                                                                         _L.fromArray([$Html$Attributes.$class("columns")]),
-                                                                                         A2($List.map,
-                                                                                         singleLessonDisplay(a),
-                                                                                         m.lessons))
-                                                                                         ,A2(lessonFields,
-                                                                                         a,
-                                                                                         m)]));
+      return function () {
+         var deleteAllLessonsButton = $List.isEmpty(m.lessons) ? $Basics.identity : F2(function (x,
+         y) {
+            return A2($List._op["::"],
+            x,
+            y);
+         })(A2($Html.a,
+         _L.fromArray([$Html$Attributes.$class("button alert expand")
+                      ,A2($Html$Events.onClick,
+                      address,
+                      DeleteAllLessons)]),
+         _L.fromArray([$Html.text("delete all lessons")])));
+         return A2($Html.div,
+         _L.fromArray([$Html$Attributes.$class("row")]),
+         $List.isEmpty(m.subjects) ? _L.fromArray([A2($Html.h3,
+         _L.fromArray([]),
+         _L.fromArray([$Html.text("Enter some subjects to get started")]))]) : _L.fromArray([A2($Html.div,
+                                                                                            _L.fromArray([$Html$Attributes.$class("columns")]),
+                                                                                            deleteAllLessonsButton(A2($List.map,
+                                                                                            singleLessonDisplay(address),
+                                                                                            m.lessons)))
+                                                                                            ,A2(lessonFields,
+                                                                                            address,
+                                                                                            m)]));
+      }();
    });
    var ruleInput = F2(function (address,
    model) {
       return function () {
+         var scopeToOption = function (a) {
+            return A2($Html.option,
+            _L.fromArray([$Html$Attributes.selected(_U.eq(a,
+                         model.target.scope))
+                         ,$Html$Attributes.value($String.toLower(a))]),
+            _L.fromArray([$Html.text(a)]));
+         };
          var enabled = A2($List.member,
          model.target.scope,
          _L.fromArray(["scope"
@@ -4619,11 +4678,7 @@ Elm.InputFields.make = function (_elm) {
                                                 $Html$Events.targetValue,
                                                 updateTarget)]),
                                    A2($List.map,
-                                   function (a) {
-                                      return A2($Html.option,
-                                      _L.fromArray([$Html$Attributes.value($String.toLower(a))]),
-                                      _L.fromArray([$Html.text(a)]));
-                                   },
+                                   scopeToOption,
                                    _L.fromArray(["None"
                                                 ,"Cell"
                                                 ,"Day"
@@ -4680,15 +4735,28 @@ Elm.InputFields.make = function (_elm) {
    });
    var ruleFields = F2(function (address,
    model) {
-      return A2($Html.div,
-      _L.fromArray([]),
-      A2($Basics._op["++"],
-      A2($List.map,
-      ruleField(address),
-      model.rules),
-      _L.fromArray([A2(ruleInput,
-      address,
-      model)])));
+      return function () {
+         var deleteAllRulesButton = $List.isEmpty(model.rules) ? $Basics.identity : F2(function (x,
+         y) {
+            return A2($List._op["::"],
+            x,
+            y);
+         })(A2($Html.a,
+         _L.fromArray([$Html$Attributes.$class("button alert expand")
+                      ,A2($Html$Events.onClick,
+                      address,
+                      DeleteAllRules)]),
+         _L.fromArray([$Html.text("delete all rules")])));
+         return A2($Html.div,
+         _L.fromArray([]),
+         deleteAllRulesButton(A2($Basics._op["++"],
+         A2($List.map,
+         ruleField(address),
+         model.rules),
+         _L.fromArray([A2(ruleInput,
+         address,
+         model)]))));
+      }();
    });
    var view = F2(function (address,
    model) {
@@ -4754,7 +4822,7 @@ Elm.InputFields.make = function (_elm) {
    });
    var actions = $Signal.mailbox(NoOp);
    var htmlSignal = $Signal.map(view(actions.address));
-   var recevier = "http://justusad.octans.uberspace.de:7097";
+   var recevier = "justusad.octans.uberspace.de:63013";
    var getData = function ($) {
       return A2($Http.post,
       $Types.decode_schedule,
@@ -4779,7 +4847,7 @@ Elm.InputFields.make = function (_elm) {
                case "Waiting":
                return $Task.succeed({ctor: "_Tuple0"});}
             _U.badCase($moduleName,
-            "between lines 475 and 481");
+            "between lines 514 and 520");
          }();
       }();
    });
