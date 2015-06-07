@@ -23,6 +23,9 @@ import Task exposing (andThen, Task)
 import Foundation exposing (tooltip)
 
 
+recevier = "http://justusad.octans.uberspace.de:7097"
+
+
 type Action
   = NoOp
   | AddLesson
@@ -39,6 +42,9 @@ type Action
   | UpdateRuleTarget String
   | DeleteRule Int
   | UpdateSeverity Int
+
+
+type RequestAction = Waiting | RequestUpdate
 
 
 update : Action -> Model -> Model
@@ -446,11 +452,6 @@ targetToString { scope, day, slot } =
 
 
 -- SIGNALS
-
-recevier = "http://localhost:7097"
-
-
-type RequestAction = Waiting | RequestUpdate
 
 
 updateMailbox : Signal.Mailbox RequestAction
