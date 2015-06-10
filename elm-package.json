@@ -13,5 +13,5 @@
     "exposed-modules": [],
     "version": "1.0.0",
     "elm-version": "0.15.0 <= v < 0.16.0",
-    "license": "LGPL2"
+    "license": "LGPL-3"
 }
