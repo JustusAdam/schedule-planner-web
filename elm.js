@@ -4131,7 +4131,11 @@ Elm.InputFields.make = function (_elm) {
                case "DeleteAllSubjects":
                return _U.replace([["subjects"
                                   ,_L.fromArray([])]
-                                 ,["lessons",_L.fromArray([])]],
+                                 ,["lessons",_L.fromArray([])]
+                                 ,["lessonField"
+                                  ,_U.replace([["subject"
+                                               ,$Types.emptySubject]],
+                                  lf)]],
                  model);
                case "DeleteLesson":
                return _U.replace([["lessons"
@@ -4165,7 +4169,12 @@ Elm.InputFields.make = function (_elm) {
                                      return !_U.eq(t.subject.sid,
                                      action._0);
                                   },
-                                  model.lessons)]],
+                                  model.lessons)]
+                                 ,["lessonField"
+                                  ,_U.eq(lf.subject.sid,
+                                  action._0) ? _U.replace([["subject"
+                                                           ,$Types.emptySubject]],
+                                  lf) : model.lessonField]],
                  model);
                case "NoOp": return model;
                case "UpdateDay":
@@ -4217,7 +4226,7 @@ Elm.InputFields.make = function (_elm) {
                                   sf)]],
                  model);}
             _U.badCase($moduleName,
-            "between lines 65 and 117");
+            "between lines 65 and 123");
          }();
       }();
    });
@@ -4847,7 +4856,7 @@ Elm.InputFields.make = function (_elm) {
                case "Waiting":
                return $Task.succeed({ctor: "_Tuple0"});}
             _U.badCase($moduleName,
-            "between lines 514 and 520");
+            "between lines 520 and 526");
          }();
       }();
    });

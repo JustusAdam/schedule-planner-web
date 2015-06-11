@@ -80,8 +80,13 @@ update action model =
         }
       DeleteSubject i       ->
         { model |
-          subjects <- List.filter (\t -> t.sid /= i) model.subjects,
-          lessons  <- List.filter (\t -> t.subject.sid /= i) model.lessons
+          subjects    <- List.filter (\t -> t.sid /= i) model.subjects,
+          lessons     <- List.filter (\t -> t.subject.sid /= i) model.lessons,
+          lessonField <-
+            if lf.subject.sid == i
+              then
+                { lf | subject <- emptySubject }
+              else model.lessonField
         }
       AddRule               ->
         if targetIsValid model.target
@@ -91,7 +96,7 @@ update action model =
             in
               { model |
                 rules <- newRule :: model.rules,
-                nrid <- model.nrid + 1
+                nrid  <- model.nrid + 1
               }
           else model
       DeleteRule i          -> { model | rules <- List.filter (\r -> r.rid /= i) model.rules }
@@ -111,8 +116,9 @@ update action model =
       DeleteAllRules        -> { model | rules <- [] }
       DeleteAllSubjects     ->
         { model |
-          subjects <- [],
-          lessons <- []
+          subjects    <- [],
+          lessons     <- [],
+          lessonField <- { lf | subject <- emptySubject }
         }
       DeleteAll             -> emptyModel
 
