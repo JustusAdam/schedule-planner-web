@@ -9439,3 +9439,7 @@ th.hide-for-touch {
     display: none !important;
   }
 }
+/* line 4, ../scss/app.scss */
+.alert-box a {
+  color: #ffc11a;
+}

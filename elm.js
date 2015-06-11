@@ -4822,7 +4822,7 @@ Elm.InputFields.make = function (_elm) {
    });
    var actions = $Signal.mailbox(NoOp);
    var htmlSignal = $Signal.map(view(actions.address));
-   var recevier = "justusad.octans.uberspace.de:63013";
+   var recevier = "http://justusad.octans.uberspace.de:63013";
    var getData = function ($) {
       return A2($Http.post,
       $Types.decode_schedule,
