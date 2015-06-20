@@ -66,3 +66,7 @@ span p xs =
       if p x
         then let (ys,zs) = span p xs' in (x::ys,zs)
         else ([],xs)
+
+
+bool : a -> a -> Bool -> a
+bool f g b = if b then g else f

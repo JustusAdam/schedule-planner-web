@@ -9443,3 +9443,8 @@ th.hide-for-touch {
 .alert-box a {
   color: #ffc11a;
 }
+
+/* line 8, ../scss/app.scss */
+.lesson-field {
+  min-width: 80px;
+}

@@ -780,6 +780,44 @@ Elm.Color.make = function (_elm) {
                        ,darkGray: darkGray};
    return _elm.Color.values;
 };
+Elm.Constants = Elm.Constants || {};
+Elm.Constants.make = function (_elm) {
+   "use strict";
+   _elm.Constants = _elm.Constants || {};
+   if (_elm.Constants.values)
+   return _elm.Constants.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   $moduleName = "Constants",
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm);
+   var colorTransparent = "rgba(0,0,0,0)";
+   var textTransparent = _L.fromArray([{ctor: "_Tuple2"
+                                       ,_0: "color"
+                                       ,_1: colorTransparent}]);
+   var styleTransparent = $Html$Attributes.style(textTransparent);
+   var nbsp = A2($Html.span,
+   _L.fromArray([styleTransparent]),
+   _L.fromArray([$Html.text("-")]));
+   var maxDay = 6;
+   var minDay = 0;
+   var maxSlot = 9;
+   var minSlot = 1;
+   var receiver = "http://justusad.octans.uberspace.de:63013";
+   _elm.Constants.values = {_op: _op
+                           ,receiver: receiver
+                           ,minSlot: minSlot
+                           ,maxSlot: maxSlot
+                           ,minDay: minDay
+                           ,maxDay: maxDay
+                           ,colorTransparent: colorTransparent
+                           ,textTransparent: textTransparent
+                           ,styleTransparent: styleTransparent
+                           ,nbsp: nbsp};
+   return _elm.Constants.values;
+};
 Elm.Debug = Elm.Debug || {};
 Elm.Debug.make = function (_elm) {
    "use strict";
@@ -3972,6 +4010,7 @@ Elm.InputFields.make = function (_elm) {
    _L = _N.List.make(_elm),
    $moduleName = "InputFields",
    $Basics = Elm.Basics.make(_elm),
+   $Constants = Elm.Constants.make(_elm),
    $Foundation = Elm.Foundation.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
@@ -3987,6 +4026,11 @@ Elm.InputFields.make = function (_elm) {
    $Task = Elm.Task.make(_elm),
    $Types = Elm.Types.make(_elm),
    $Util = Elm.Util.make(_elm);
+   var getData = function ($) {
+      return A2($Http.post,
+      $Types.decode_schedule,
+      $Constants.receiver)($Http.string($Json$Encode.encode(0)($)));
+   };
    var dummyTask = $Task.succeed(_L.fromArray([{_: {}
                                                ,day: 0
                                                ,lid: 0
@@ -4226,13 +4270,36 @@ Elm.InputFields.make = function (_elm) {
                                   sf)]],
                  model);}
             _U.badCase($moduleName,
-            "between lines 65 and 123");
+            "between lines 63 and 121");
          }();
       }();
    });
    var RequestUpdate = {ctor: "RequestUpdate"};
    var Waiting = {ctor: "Waiting"};
    var updateMailbox = $Signal.mailbox(Waiting);
+   var doUpdate = F2(function (action,
+   model) {
+      return function () {
+         var act = $OutputFields.actions;
+         return function () {
+            switch (action.ctor)
+            {case "RequestUpdate":
+               return A2($Task.andThen,
+                 A2($Task.andThen,
+                 A2($Signal.send,
+                 updateMailbox.address,
+                 Waiting),
+                 $Util.$const(getData($Types.encode_datafile(model)))),
+                 function ($) {
+                    return $Signal.send(act.address)($OutputFields.Update($));
+                 });
+               case "Waiting":
+               return $Task.succeed({ctor: "_Tuple0"});}
+            _U.badCase($moduleName,
+            "between lines 518 and 524");
+         }();
+      }();
+   });
    var DeleteAll = {ctor: "DeleteAll"};
    var DeleteAllSubjects = {ctor: "DeleteAllSubjects"};
    var DeleteAllRules = {ctor: "DeleteAllRules"};
@@ -4246,7 +4313,7 @@ Elm.InputFields.make = function (_elm) {
              ,_0: a};
    };
    var ruleField = F2(function (address,
-   _v15) {
+   _v16) {
       return function () {
          return A2($Html.div,
          _L.fromArray([$Html$Attributes.$class("row")]),
@@ -4257,10 +4324,10 @@ Elm.InputFields.make = function (_elm) {
                       _L.fromArray([$Html.text(A2($Basics._op["++"],
                       "Rule for ",
                       A2($Basics._op["++"],
-                      targetToString(_v15.target),
+                      targetToString(_v16.target),
                       A2($Basics._op["++"],
                       " with a weight of ",
-                      $Basics.toString(_v15.severity)))))]))]))
+                      $Basics.toString(_v16.severity)))))]))]))
                       ,A2($Html.div,
                       _L.fromArray([$Html$Attributes.$class("delete-rule columns small-2")]),
                       _L.fromArray([A2($Html.a,
@@ -4268,7 +4335,7 @@ Elm.InputFields.make = function (_elm) {
                       _L.fromArray([$Html$Attributes.$class("has-tip alert button postfix")
                                    ,A2($Html$Events.onClick,
                                    address,
-                                   DeleteRule(_v15.rid))]),
+                                   DeleteRule(_v16.rid))]),
                       $Foundation.tooltip("You want to delete me?")),
                       _L.fromArray([$Html.text("x")]))]))]));
       }();
@@ -4523,7 +4590,8 @@ Elm.InputFields.make = function (_elm) {
                                                              updateSlot)]),
                                                 A2($List.map,
                                                 slotToOption,
-                                                _L.range(0,9)))]))
+                                                _L.range($Constants.minSlot,
+                                                $Constants.maxSlot)))]))
                                    ,A2($Html.div,
                                    _L.fromArray([$Html$Attributes.$class("small-4 columns")]),
                                    _L.fromArray([A2($Html.label,
@@ -4537,7 +4605,8 @@ Elm.InputFields.make = function (_elm) {
                                                              updateDay)]),
                                                 A2($List.map,
                                                 dayToOption,
-                                                _L.range(0,6)))]))]))
+                                                _L.range($Constants.minDay,
+                                                $Constants.maxDay)))]))]))
                       ,A2($Html.div,
                       _L.fromArray([$Html$Attributes.$class("row")]),
                       _L.fromArray([A2($Html.div,
@@ -4694,8 +4763,8 @@ Elm.InputFields.make = function (_elm) {
                                                 ,"Slot"])))]))]),
                       A2($Basics._op["++"],
                       function () {
-                         var _v17 = model.target.scope;
-                         switch (_v17)
+                         var _v18 = model.target.scope;
+                         switch (_v18)
                          {case "cell":
                             return _L.fromArray([uDayIn
                                                 ,uSlotIn]);
@@ -4831,35 +4900,6 @@ Elm.InputFields.make = function (_elm) {
    });
    var actions = $Signal.mailbox(NoOp);
    var htmlSignal = $Signal.map(view(actions.address));
-   var recevier = "http://justusad.octans.uberspace.de:63013";
-   var getData = function ($) {
-      return A2($Http.post,
-      $Types.decode_schedule,
-      recevier)($Http.string($Json$Encode.encode(0)($)));
-   };
-   var doUpdate = F2(function (action,
-   model) {
-      return function () {
-         var act = $OutputFields.actions;
-         return function () {
-            switch (action.ctor)
-            {case "RequestUpdate":
-               return A2($Task.andThen,
-                 A2($Task.andThen,
-                 A2($Signal.send,
-                 updateMailbox.address,
-                 Waiting),
-                 $Util.$const(getData($Types.encode_datafile(model)))),
-                 function ($) {
-                    return $Signal.send(act.address)($OutputFields.Update($));
-                 });
-               case "Waiting":
-               return $Task.succeed({ctor: "_Tuple0"});}
-            _U.badCase($moduleName,
-            "between lines 520 and 526");
-         }();
-      }();
-   });
    _elm.InputFields.values = {_op: _op
                              ,doUpdate: doUpdate
                              ,updateMailbox: updateMailbox
@@ -14145,6 +14185,7 @@ Elm.OutputFields.make = function (_elm) {
    _L = _N.List.make(_elm),
    $moduleName = "OutputFields",
    $Basics = Elm.Basics.make(_elm),
+   $Constants = Elm.Constants.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $List = Elm.List.make(_elm),
@@ -14157,7 +14198,7 @@ Elm.OutputFields.make = function (_elm) {
             return $Basics.fst(A2($List.foldr,
             F2(function (index,l) {
                return function () {
-                  var space = "";
+                  var space = $Constants.nbsp;
                   var $ = l,n = $._0,y = $._1;
                   return function () {
                      switch (y.ctor)
@@ -14165,7 +14206,7 @@ Elm.OutputFields.make = function (_elm) {
                         return _U.eq(y._0.day,
                           index) ? {ctor: "_Tuple2"
                                    ,_0: A2($List._op["::"],
-                                   y._0.subject.name,
+                                   $Html.text(y._0.subject.name),
                                    n)
                                    ,_1: y._1} : {ctor: "_Tuple2"
                                                 ,_0: A2($List._op["::"],space,n)
@@ -14175,19 +14216,49 @@ Elm.OutputFields.make = function (_elm) {
                                ,_0: A2($List._op["::"],space,n)
                                ,_1: y};}
                      _U.badCase($moduleName,
-                     "between lines 57 and 62");
+                     "between lines 70 and 75");
                   }();
                }();
             }),
             {ctor: "_Tuple2"
             ,_0: _L.fromArray([])
-            ,_1: l})($List.reverse(_L.range(0,
-            5))));
+            ,_1: l})(_L.range($Constants.minDay,
+            $Constants.maxDay)));
          };
          var col = F2(function (elem,
          ind) {
             return _U.eq(elem.day,
             ind) ? elem.subject.name : "-";
+         });
+         var fillList = F2(function (num,
+         l) {
+            return _U.cmp(num,
+            $Constants.maxSlot) > 0 ? _L.fromArray([]) : function () {
+               switch (l.ctor)
+               {case "::": return function () {
+                       switch (l._0.ctor)
+                       {case "::":
+                          return _U.eq(l._0._0.slot,
+                            num) ? A2($List._op["::"],
+                            l._0,
+                            A2(fillList,
+                            num + 1,
+                            l._1)) : A2($List._op["::"],
+                            _L.fromArray([]),
+                            A2(fillList,num + 1,l));
+                          case "[]": return A2(fillList,
+                            num,
+                            l._1);}
+                       _U.badCase($moduleName,
+                       "between lines 50 and 56");
+                    }();
+                  case "[]":
+                  return A2($List._op["::"],
+                    _L.fromArray([]),
+                    A2(fillList,num + 1,l));}
+               _U.badCase($moduleName,
+               "between lines 47 and 56");
+            }();
          });
          var grouped = A2($Util.groupBy,
          F2(function (l1,l2) {
@@ -14195,31 +14266,34 @@ Elm.OutputFields.make = function (_elm) {
             l2.slot);
          }),
          lessons);
-         var sorted = $List.sortBy(function (_v3) {
+         var sorted = $List.sortBy(function (_v9) {
             return function () {
-               switch (_v3.ctor)
-               {case "::": return _v3._0.day;}
+               switch (_v9.ctor)
+               {case "::": return _v9._0.day;}
                _U.badCase($moduleName,
-               "on line 43, column 39 to 44");
+               "on line 42, column 39 to 44");
             }();
          })(A2($List.map,
          $List.sortBy(function (l) {
             return l.day;
          }),
          grouped));
+         var filledList = A2(fillList,
+         1,
+         sorted);
          var cellField = function (a) {
-            return A2($Html.div,
-            _L.fromArray([$Html$Attributes.$class("column small-2 text-center")]),
+            return A2($Html.td,
+            _L.fromArray([$Html$Attributes.$class("lesson-field text-center")]),
             _L.fromArray([a]));
          };
          return A2($Html.table,
          _L.fromArray([$Html$Attributes.$class("column small-12")]),
          A2($List._op["::"],
-         A2($Html.hr,
+         A2($Html.tr,
          _L.fromArray([]),
          A2($List.map,
          function ($) {
-            return $Html.th(_L.fromArray([$Html$Attributes.$class("column small-2 text-center")]))(A2($Basics.flip,
+            return $Html.th(_L.fromArray([$Html$Attributes.$class("lesson-field text-center")]))(A2($Basics.flip,
             F2(function (x,y) {
                return A2($List._op["::"],
                x,
@@ -14227,16 +14301,14 @@ Elm.OutputFields.make = function (_elm) {
             }),
             _L.fromArray([]))($Html.text($)));
          },
-         A2($List.take,6,$Util.days))),
+         $Util.days)),
          A2($List.map,
          function ($) {
             return function ($) {
-               return $Html.tr(_L.fromArray([]))($List.map(function ($) {
-                  return cellField($Html.text($));
-               })($));
+               return $Html.tr(_L.fromArray([]))($List.map(cellField)($));
             }(row($));
          },
-         sorted)));
+         filledList)));
       }();
    };
    var view = function (model) {
@@ -14258,7 +14330,7 @@ Elm.OutputFields.make = function (_elm) {
                                ,action._0]],
               model);}
          _U.badCase($moduleName,
-         "between lines 26 and 28");
+         "between lines 25 and 27");
       }();
    });
    var emptyModel = {_: {}
@@ -15439,6 +15511,9 @@ Elm.Util.make = function (_elm) {
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
    $Signal = Elm.Signal.make(_elm);
+   var bool = F3(function (f,g,b) {
+      return b ? g : f;
+   });
    var span = F2(function (p,xs) {
       return function () {
          switch (xs.ctor)
@@ -15565,7 +15640,8 @@ Elm.Util.make = function (_elm) {
                       ,$const: $const
                       ,isJust: isJust
                       ,groupBy: groupBy
-                      ,span: span};
+                      ,span: span
+                      ,bool: bool};
    return _elm.Util.values;
 };
 Elm.VirtualDom = Elm.VirtualDom || {};

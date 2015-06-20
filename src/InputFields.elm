@@ -21,9 +21,7 @@ import Html.Lazy exposing (lazy2)
 import OutputFields
 import Task exposing (andThen, Task)
 import Foundation exposing (tooltip)
-
-
-recevier = "http://justusad.octans.uberspace.de:63013"
+import Constants exposing (..)
 
 
 type Action
@@ -351,7 +349,7 @@ lessonFields address model =
             [ text "Enter Slot" ]
           , select
             [ Attr.id "update-slot", on "input" targetValue updateSlot ]
-            (List.map slotToOption [0..9])
+            (List.map slotToOption [minSlot..maxSlot])
           ]
         , div
           [ class "small-4 columns" ]
@@ -360,7 +358,7 @@ lessonFields address model =
             [ text "Enter Day" ]
           , select
             [ Attr.id "update-day", on "input" targetValue updateDay ]
-            (List.map dayToOption [0..6])
+            (List.map dayToOption [minDay..maxDay])
           ]
         ]
       , div
@@ -529,7 +527,7 @@ doUpdate action model =
 getData : Encode.Value -> Task Http.Error (List (Int, List Lesson))
 getData =
   Http.post
-    decode_schedule recevier
+    decode_schedule receiver
   << Http.string
   << Encode.encode 0
 
