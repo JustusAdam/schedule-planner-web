@@ -9448,3 +9448,27 @@ th.hide-for-touch {
 .lesson-field {
   min-width: 80px;
 }
+
+/* line 12, ../scss/app.scss */
+.section-wrapper {
+  margin: 10px 0px;
+  padding: 10px 25px;
+  border: 1px solid #c7c7c7;
+  background-color: #f0f0f0;
+  border-radius: 7px;
+}
+
+/* line 20, ../scss/app.scss */
+.rules-display, .lessons-display {
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+/* line 25, ../scss/app.scss */
+.rules-display, .lessons-display, .subjects-display {
+  font-weight: bold;
+}
+/* line 27, ../scss/app.scss */
+.rules-display p, .lessons-display p, .subjects-display p {
+  font-weight: bold;
+}

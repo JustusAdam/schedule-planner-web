@@ -4296,7 +4296,7 @@ Elm.InputFields.make = function (_elm) {
                case "Waiting":
                return $Task.succeed({ctor: "_Tuple0"});}
             _U.badCase($moduleName,
-            "between lines 518 and 524");
+            "between lines 529 and 535");
          }();
       }();
    });
@@ -4318,7 +4318,7 @@ Elm.InputFields.make = function (_elm) {
          return A2($Html.div,
          _L.fromArray([$Html$Attributes.$class("row")]),
          _L.fromArray([A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("rule columns small-9")]),
+                      _L.fromArray([$Html$Attributes.$class("rule columns small-10")]),
                       _L.fromArray([A2($Html.p,
                       _L.fromArray([]),
                       _L.fromArray([$Html.text(A2($Basics._op["++"],
@@ -4329,10 +4329,10 @@ Elm.InputFields.make = function (_elm) {
                       " with a weight of ",
                       $Basics.toString(_v16.severity)))))]))]))
                       ,A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("delete-rule columns small-2")]),
+                      _L.fromArray([$Html$Attributes.$class("delete-rule columns small-1")]),
                       _L.fromArray([A2($Html.a,
                       A2($Basics._op["++"],
-                      _L.fromArray([$Html$Attributes.$class("has-tip alert button postfix")
+                      _L.fromArray([$Html$Attributes.$class("has-tip")
                                    ,A2($Html$Events.onClick,
                                    address,
                                    DeleteRule(_v16.rid))]),
@@ -4393,7 +4393,7 @@ Elm.InputFields.make = function (_elm) {
                    _L.fromArray([$Html$Attributes.$class("remove-subject small-2 column")]),
                    _L.fromArray([A2($Html.a,
                    A2($Basics._op["++"],
-                   _L.fromArray([$Html$Attributes.$class("button alert postfix has-tip")
+                   _L.fromArray([$Html$Attributes.$class("has-tip")
                                 ,A2($Html$Events.onClick,
                                 address,
                                 DeleteSubject(s.sid))]),
@@ -4416,16 +4416,16 @@ Elm.InputFields.make = function (_elm) {
                    $Util.days,
                    l.day)))]))
                    ,A2($Html.div,
-                   _L.fromArray([$Html$Attributes.$class("lesson-slot small-3 columns")]),
+                   _L.fromArray([$Html$Attributes.$class("lesson-slot small-4 columns")]),
                    _L.fromArray([$Html.text($Basics.toString(l.slot))]))
                    ,A2($Html.div,
-                   _L.fromArray([$Html$Attributes.$class("lesson-subject small-3 columns")]),
+                   _L.fromArray([$Html$Attributes.$class("lesson-subject small-4 columns")]),
                    _L.fromArray([$Html.text(l.subject.name)]))
                    ,A2($Html.div,
-                   _L.fromArray([$Html$Attributes.$class("lesson-delete columns small-3")]),
+                   _L.fromArray([$Html$Attributes.$class("lesson-delete columns small-1")]),
                    _L.fromArray([A2($Html.a,
                    A2($Basics._op["++"],
-                   _L.fromArray([$Html$Attributes.$class("has-tip button alert postfix")
+                   _L.fromArray([$Html$Attributes.$class("has-tip")
                                 ,A2($Html$Events.onClick,
                                 address,
                                 DeleteLesson(l.lid))]),
@@ -4498,22 +4498,16 @@ Elm.InputFields.make = function (_elm) {
    var subjectDisplay = F2(function (address,
    m) {
       return function () {
-         var deleteAllSubjectsButton = $List.isEmpty(m.subjects) ? $Basics.identity : F2(function (x,
-         y) {
-            return A2($List._op["::"],
-            x,
-            y);
-         })(A2($Html.a,
-         _L.fromArray([$Html$Attributes.$class("button alert expand")
-                      ,A2($Html$Events.onClick,
-                      address,
-                      DeleteAllSubjects)]),
-         _L.fromArray([$Html.text("delete all")])));
+         var deleteAllSubjectsButton = $List.isEmpty(m.subjects) ? _L.fromArray([]) : _L.fromArray([A2($Html.a,
+         _L.fromArray([A2($Html$Events.onClick,
+         address,
+         DeleteAllSubjects)]),
+         _L.fromArray([$Html.text("Delete all Subjects")]))]);
          return A2($Html.div,
          _L.fromArray([]),
          _L.fromArray([A2($Html.nav,
-                      _L.fromArray([]),
-                      deleteAllSubjectsButton(_L.fromArray([A2($Html.ul,
+                      _L.fromArray([$Html$Attributes.$class("subjects-display")]),
+                      _L.fromArray([A2($Html.ul,
                       _L.fromArray([$Html$Attributes.$class("side-nav")]),
                       A2($List.map,
                       function (s) {
@@ -4523,8 +4517,11 @@ Elm.InputFields.make = function (_elm) {
                          _U.eq(m.lessonField.subject.sid,
                          s.sid));
                       },
-                      m.subjects))])))
-                      ,A2(subjectFields,address,m)]));
+                      m.subjects))]))
+                      ,A2(subjectFields,address,m)
+                      ,A2($Html.div,
+                      _L.fromArray([]),
+                      deleteAllSubjectsButton)]));
       }();
    });
    var AddLesson = {ctor: "AddLesson"};
@@ -4574,46 +4571,44 @@ Elm.InputFields.make = function (_elm) {
             y);
          })($Foundation.tooltip("You should choose a subject first. It\'s really easy, just click on it."));
          return A2($Html.div,
-         _L.fromArray([]),
+         _L.fromArray([$Html$Attributes.$class("columns")]),
          _L.fromArray([A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("row")]),
-                      _L.fromArray([A2($Html.div,
-                                   _L.fromArray([$Html$Attributes.$class("small-4 columns")]),
-                                   _L.fromArray([A2($Html.label,
-                                                _L.fromArray([$Html$Attributes.$for("update-slot")]),
-                                                _L.fromArray([$Html.text("Enter Slot")]))
-                                                ,A2($Html.select,
-                                                _L.fromArray([$Html$Attributes.id("update-slot")
-                                                             ,A3($Html$Events.on,
-                                                             "input",
-                                                             $Html$Events.targetValue,
-                                                             updateSlot)]),
-                                                A2($List.map,
-                                                slotToOption,
-                                                _L.range($Constants.minSlot,
-                                                $Constants.maxSlot)))]))
-                                   ,A2($Html.div,
-                                   _L.fromArray([$Html$Attributes.$class("small-4 columns")]),
-                                   _L.fromArray([A2($Html.label,
-                                                _L.fromArray([$Html$Attributes.$for("update-day")]),
-                                                _L.fromArray([$Html.text("Enter Day")]))
-                                                ,A2($Html.select,
-                                                _L.fromArray([$Html$Attributes.id("update-day")
-                                                             ,A3($Html$Events.on,
-                                                             "input",
-                                                             $Html$Events.targetValue,
-                                                             updateDay)]),
-                                                A2($List.map,
-                                                dayToOption,
-                                                _L.range($Constants.minDay,
-                                                $Constants.maxDay)))]))]))
+         _L.fromArray([$Html$Attributes.$class("row")]),
+         _L.fromArray([A2($Html.div,
+                      _L.fromArray([$Html$Attributes.$class("small-5 columns")]),
+                      _L.fromArray([A2($Html.label,
+                                   _L.fromArray([$Html$Attributes.$for("update-slot")]),
+                                   _L.fromArray([$Html.text("Enter Slot")]))
+                                   ,A2($Html.select,
+                                   _L.fromArray([$Html$Attributes.id("update-slot")
+                                                ,A3($Html$Events.on,
+                                                "input",
+                                                $Html$Events.targetValue,
+                                                updateSlot)]),
+                                   A2($List.map,
+                                   slotToOption,
+                                   _L.range($Constants.minSlot,
+                                   $Constants.maxSlot)))]))
                       ,A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("row")]),
-                      _L.fromArray([A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("columns small-12")]),
+                      _L.fromArray([$Html$Attributes.$class("small-5 columns")]),
+                      _L.fromArray([A2($Html.label,
+                                   _L.fromArray([$Html$Attributes.$for("update-day")]),
+                                   _L.fromArray([$Html.text("Enter Day")]))
+                                   ,A2($Html.select,
+                                   _L.fromArray([$Html$Attributes.id("update-day")
+                                                ,A3($Html$Events.on,
+                                                "input",
+                                                $Html$Events.targetValue,
+                                                updateDay)]),
+                                   A2($List.map,
+                                   dayToOption,
+                                   _L.range($Constants.minDay,
+                                   $Constants.maxDay)))]))
+                      ,A2($Html.div,
+                      _L.fromArray([$Html$Attributes.$class("columns small-2")]),
                       _L.fromArray([A2($Html.a,
                       buttonAction(_L.fromArray([$Html$Attributes.classList(_L.fromArray([{ctor: "_Tuple2"
-                                                                                          ,_0: "button expand"
+                                                                                          ,_0: "button"
                                                                                           ,_1: true}
                                                                                          ,{ctor: "_Tuple2"
                                                                                           ,_0: "disabled"
@@ -4627,29 +4622,26 @@ Elm.InputFields.make = function (_elm) {
    var lessonDisplay = F2(function (address,
    m) {
       return function () {
-         var deleteAllLessonsButton = $List.isEmpty(m.lessons) ? $Basics.identity : F2(function (x,
-         y) {
-            return A2($List._op["::"],
-            x,
-            y);
-         })(A2($Html.a,
-         _L.fromArray([$Html$Attributes.$class("button alert expand")
-                      ,A2($Html$Events.onClick,
-                      address,
-                      DeleteAllLessons)]),
-         _L.fromArray([$Html.text("delete all lessons")])));
+         var deleteAllLessonsButton = $List.isEmpty(m.lessons) ? _L.fromArray([]) : _L.fromArray([A2($Html.a,
+         _L.fromArray([A2($Html$Events.onClick,
+         address,
+         DeleteAllLessons)]),
+         _L.fromArray([$Html.text("Delete all lessons")]))]);
          return A2($Html.div,
          _L.fromArray([$Html$Attributes.$class("row")]),
          $List.isEmpty(m.subjects) ? _L.fromArray([A2($Html.h3,
          _L.fromArray([]),
          _L.fromArray([$Html.text("Enter some subjects to get started")]))]) : _L.fromArray([A2($Html.div,
-                                                                                            _L.fromArray([$Html$Attributes.$class("columns")]),
-                                                                                            deleteAllLessonsButton(A2($List.map,
+                                                                                            _L.fromArray([$Html$Attributes.$class("columns small-12 lessons-display")]),
+                                                                                            A2($List.map,
                                                                                             singleLessonDisplay(address),
-                                                                                            m.lessons)))
+                                                                                            m.lessons))
                                                                                             ,A2(lessonFields,
                                                                                             address,
-                                                                                            m)]));
+                                                                                            m)
+                                                                                            ,A2($Html.div,
+                                                                                            _L.fromArray([]),
+                                                                                            deleteAllLessonsButton)]));
       }();
    });
    var ruleInput = F2(function (address,
@@ -4814,26 +4806,24 @@ Elm.InputFields.make = function (_elm) {
    var ruleFields = F2(function (address,
    model) {
       return function () {
-         var deleteAllRulesButton = $List.isEmpty(model.rules) ? $Basics.identity : F2(function (x,
-         y) {
-            return A2($List._op["::"],
-            x,
-            y);
-         })(A2($Html.a,
-         _L.fromArray([$Html$Attributes.$class("button alert expand")
-                      ,A2($Html$Events.onClick,
-                      address,
-                      DeleteAllRules)]),
-         _L.fromArray([$Html.text("delete all rules")])));
+         var deleteAllRulesButton = $List.isEmpty(model.rules) ? _L.fromArray([]) : _L.fromArray([A2($Html.a,
+         _L.fromArray([A2($Html$Events.onClick,
+         address,
+         DeleteAllRules)]),
+         _L.fromArray([$Html.text("Delete all rules")]))]);
          return A2($Html.div,
          _L.fromArray([]),
-         deleteAllRulesButton(A2($Basics._op["++"],
+         A2($Basics._op["++"],
+         _L.fromArray([A2($Html.div,
+         _L.fromArray([$Html$Attributes.$class("rules-display")]),
          A2($List.map,
          ruleField(address),
-         model.rules),
+         model.rules))]),
+         A2($Basics._op["++"],
          _L.fromArray([A2(ruleInput,
          address,
-         model)]))));
+         model)]),
+         deleteAllRulesButton)));
       }();
    });
    var view = F2(function (address,
@@ -4855,39 +4845,52 @@ Elm.InputFields.make = function (_elm) {
             y);
          })($Foundation.tooltip("Why don\'t you define some lessons?"));
          return A2($Html.div,
-         _L.fromArray([$Html$Attributes.$class("row")]),
+         _L.fromArray([]),
          _L.fromArray([A2($Html.div,
                       _L.fromArray([$Html$Attributes.$class("row")]),
                       _L.fromArray([A2($Html.section,
                                    _L.fromArray([$Html$Attributes.id("subjects-area")
                                                 ,$Html$Attributes.$class("small-6 columns")]),
-                                   _L.fromArray([A3($Html$Lazy.lazy2,
-                                   subjectDisplay,
-                                   address,
-                                   model)]))
+                                   _L.fromArray([A2($Html.div,
+                                   _L.fromArray([$Html$Attributes.$class("section-wrapper")]),
+                                   _L.fromArray([A2($Html.h4,
+                                                _L.fromArray([]),
+                                                _L.fromArray([$Html.text("Subjects")]))
+                                                ,A3($Html$Lazy.lazy2,
+                                                subjectDisplay,
+                                                address,
+                                                model)]))]))
                                    ,A2($Html.section,
                                    _L.fromArray([$Html$Attributes.id("lessons-area")
                                                 ,$Html$Attributes.$class("small-6 columns")]),
-                                   _L.fromArray([A3($Html$Lazy.lazy2,
-                                   lessonDisplay,
-                                   address,
-                                   model)]))]))
+                                   _L.fromArray([A2($Html.div,
+                                   _L.fromArray([$Html$Attributes.$class("section-wrapper")]),
+                                   _L.fromArray([A2($Html.h4,
+                                                _L.fromArray([]),
+                                                _L.fromArray([$Html.text("Lessons")]))
+                                                ,A3($Html$Lazy.lazy2,
+                                                lessonDisplay,
+                                                address,
+                                                model)]))]))]))
                       ,A2($Html.div,
                       _L.fromArray([$Html$Attributes.$class("row")]),
-                      _L.fromArray([A2($Html.div,
-                      _L.fromArray([$Html$Attributes.$class("column small-12")]),
                       _L.fromArray([A2($Html.section,
                                    _L.fromArray([$Html$Attributes.id("rule-area")
                                                 ,$Html$Attributes.$class("small-6 columns")]),
-                                   _L.fromArray([A3($Html$Lazy.lazy2,
-                                   ruleFields,
-                                   address,
-                                   model)]))
+                                   _L.fromArray([A2($Html.div,
+                                   _L.fromArray([$Html$Attributes.$class("section-wrapper")]),
+                                   _L.fromArray([A2($Html.h4,
+                                                _L.fromArray([]),
+                                                _L.fromArray([$Html.text("Rules")]))
+                                                ,A3($Html$Lazy.lazy2,
+                                                ruleFields,
+                                                address,
+                                                model)]))]))
                                    ,A2($Html.div,
                                    _L.fromArray([$Html$Attributes.$class("column small-6")]),
                                    _L.fromArray([A2($Html.a,
                                    buttonAction(_L.fromArray([$Html$Attributes.classList(_L.fromArray([{ctor: "_Tuple2"
-                                                                                                       ,_0: "button success expand"
+                                                                                                       ,_0: "button success right"
                                                                                                        ,_1: true}
                                                                                                       ,{ctor: "_Tuple2"
                                                                                                        ,_0: "disabled"
@@ -4895,7 +4898,7 @@ Elm.InputFields.make = function (_elm) {
                                                                                                       ,{ctor: "_Tuple2"
                                                                                                        ,_0: "has-tip"
                                                                                                        ,_1: $Basics.not(enabled)}]))])),
-                                   _L.fromArray([$Html.text(">>=")]))]))]))]))]));
+                                   _L.fromArray([$Html.text(">>=")]))]))]))]));
       }();
    });
    var actions = $Signal.mailbox(NoOp);

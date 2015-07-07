@@ -158,28 +158,37 @@ view address model =
         else (++) (tooltip "Why don't you define some lessons?")
   in
     div
-      [ class "row" ]
+      []
       [ div [ class "row" ]
         [ section
           [ Attr.id "subjects-area", class "small-6 columns" ]
-          [ lazy2 subjectDisplay address model ]
+          [ div [ class "section-wrapper" ]
+            [ h4 [] [ text "Subjects" ]
+            , lazy2 subjectDisplay address model
+            ]
+          ]
         , section
           [ Attr.id "lessons-area", class "small-6 columns" ]
-          [ lazy2 lessonDisplay address model ]
+          [ div [ class "section-wrapper" ]
+            [ h4 [] [ text "Lessons" ]
+            , lazy2 lessonDisplay address model
+            ]
+          ]
         ]
       , div [ class "row" ]
-        [ div
-          [ class "column small-12" ]
-          [ section
-            [ Attr.id "rule-area", class "small-6 columns" ]
-            [ lazy2 ruleFields address model ]
-          , div
-            [ class "column small-6" ]
-            [ a
-              (buttonAction [ classList
-                 [("button success expand", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
-              [ text ">>=" ]
+        [ section
+          [ Attr.id "rule-area", class "small-6 columns" ]
+          [ div [ class "section-wrapper" ]
+            [ h4 [] [ text "Rules" ]
+            , lazy2 ruleFields address model
             ]
+          ]
+        , div
+          [ class "column small-6" ]
+          [ a
+            (buttonAction [ classList
+               [("button success right", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
+            [ text ">>=" ]
           ]
         ]
       ]
@@ -190,20 +199,21 @@ subjectDisplay address m =
   let
     deleteAllSubjectsButton =
       if List.isEmpty m.subjects
-        then identity
-        else (::) (a [ class "button alert expand", onClick address DeleteAllSubjects ] [ text "delete all" ])
+        then []
+        else [a [ onClick address DeleteAllSubjects ] [ text "Delete all Subjects" ]]
   in
     div
       []
       [ nav
-        []
-        (deleteAllSubjectsButton [ ul
+        [ class "subjects-display" ]
+        ([ ul
           [ class "side-nav" ]
           (List.map
             (\s -> singleSubjectDisplay address s (m.lessonField.subject.sid == s.sid) )
             m.subjects)
         ])
       , subjectFields address m
+      , div [] deleteAllSubjectsButton
       ]
 
 
@@ -222,7 +232,7 @@ singleSubjectDisplay address s active =
         , div
             [ class "remove-subject small-2 column" ]
             [ a
-                ([ class "button alert postfix has-tip"
+                ([ class "has-tip"
                 , onClick address (DeleteSubject s.sid)
                 ] ++ tooltip "You want to delete me?")
                 [ text "x" ]
@@ -284,8 +294,8 @@ lessonDisplay address m =
   let
     deleteAllLessonsButton =
       if List.isEmpty m.lessons
-        then identity
-        else (::) (a [ class "button alert expand", onClick address DeleteAllLessons ] [ text "delete all lessons" ])
+        then []
+        else [a [ onClick address DeleteAllLessons ] [ text "Delete all lessons" ]]
   in
   div
     [ class "row" ]
@@ -293,9 +303,10 @@ lessonDisplay address m =
       then [ h3 [] [ text "Enter some subjects to get started" ] ]
       else
         [ div
-          [ class "columns" ]
-          (deleteAllLessonsButton (List.map (singleLessonDisplay address) m.lessons))
+          [ class "columns small-12 lessons-display" ]
+          (List.map (singleLessonDisplay address) m.lessons)
         , lessonFields address m
+        , div [] deleteAllLessonsButton
         ])
 
 singleLessonDisplay : Address Action -> Lesson -> Html
@@ -305,12 +316,12 @@ singleLessonDisplay address l =
     [ div
       [ class "lesson-day small-3 columns" ]
       [ text (Maybe.withDefault "invalid" (days !! l.day)) ]
-    , div [ class "lesson-slot small-3 columns" ] [ text (toString l.slot) ]
-    , div [ class "lesson-subject small-3 columns" ] [ text l.subject.name ]
+    , div [ class "lesson-slot small-4 columns" ] [ text (toString l.slot) ]
+    , div [ class "lesson-subject small-4 columns" ] [ text l.subject.name ]
     , div
-      [ class "lesson-delete columns small-3" ]
+      [ class "lesson-delete columns small-1" ]
       [ a
-        ([ class "has-tip button alert postfix", onClick address (DeleteLesson l.lid) ] ++ tooltip "Do you want to delete me?")
+        ([ class "has-tip", onClick address (DeleteLesson l.lid) ] ++ tooltip "Do you want to delete me?")
         [ text "x" ]
       ]
     ]
@@ -339,11 +350,11 @@ lessonFields address model =
                        [ text (Maybe.withDefault "invalid" (days !! n)) ]
   in
     div
-      []
+      [ class "columns" ]
       [ div
         [ class "row" ]
         [ div
-          [ class "small-4 columns" ]
+          [ class "small-5 columns" ]
           [ label
             [ for "update-slot" ]
             [ text "Enter Slot" ]
@@ -352,7 +363,7 @@ lessonFields address model =
             (List.map slotToOption [minSlot..maxSlot])
           ]
         , div
-          [ class "small-4 columns" ]
+          [ class "small-5 columns" ]
           [ label
             [ for "update-day" ]
             [ text "Enter Day" ]
@@ -360,13 +371,10 @@ lessonFields address model =
             [ Attr.id "update-day", on "input" targetValue updateDay ]
             (List.map dayToOption [minDay..maxDay])
           ]
-        ]
-      , div
-        [ class "row" ]
-        [ div
-          [ class "columns small-12" ]
+        , div
+          [ class "columns small-2" ]
           [ a
-            (buttonAction [ classList [ ("button expand", True), ("disabled", not enabled), ("has-tip", not enabled) ] ])
+            (buttonAction [ classList [ ("button", True), ("disabled", not enabled), ("has-tip", not enabled) ] ])
             [ text "+" ]
           ]
         ]
@@ -382,10 +390,13 @@ ruleFields address model =
   let
     deleteAllRulesButton =
       if List.isEmpty model.rules
-        then identity
-        else (::) (a [ class "button alert expand", onClick address DeleteAllRules ] [ text "delete all rules" ])
+        then []
+        else [a [ onClick address DeleteAllRules ] [ text "Delete all rules" ]]
   in
-    div [] (deleteAllRulesButton (List.map (ruleField address) model.rules ++ [ruleInput address model]))
+    div []
+      ([ div  [ class "rules-display" ]
+          (List.map (ruleField address) model.rules)
+      ] ++ [ruleInput address model] ++ deleteAllRulesButton )
 
 
 ruleField : Address Action -> Rule -> Html
@@ -393,12 +404,12 @@ ruleField address { target, severity, rid }  =
   div
     [ class "row" ]
     [ div
-      [ class "rule columns small-9" ]
+      [ class "rule columns small-10" ]
       [ p [] [text ("Rule for " ++ targetToString target ++ " with a weight of " ++ toString severity) ] ]
     , div
-      [ class "delete-rule columns small-2" ]
+      [ class "delete-rule columns small-1" ]
       [ a
-        ([ class "has-tip alert button postfix", onClick address (DeleteRule rid) ] ++ tooltip "You want to delete me?")
+        ([ class "has-tip", onClick address (DeleteRule rid) ] ++ tooltip "You want to delete me?")
         [ text "x" ]
       ]
     ]

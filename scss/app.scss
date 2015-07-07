@@ -9,6 +9,30 @@
   min-width: 80px;
 }
 
+.section-wrapper {
+  margin: 10px 0px;
+  padding: 10px 25px;
+  border: 1px solid rgb(199, 199, 199);
+  background-color: rgb(240, 240, 240);
+  border-radius: 7px;
+}
+
+.rules-display, .lessons-display {
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.rules-display, .lessons-display, .subjects-display {
+  font-weight: bold;
+  p {
+    font-weight: bold;
+  }
+}
+
+section {
+
+}
+
 // Or selectively include components
 // @import
 //   "foundation/components/accordion",
