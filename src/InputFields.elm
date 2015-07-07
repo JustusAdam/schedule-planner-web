@@ -177,14 +177,16 @@ view address model =
         ]
       , div [ class "row" ]
         [ section
-          [ Attr.id "rule-area", class "small-6 columns" ]
+          [ Attr.id "rule-area", class "small-12 columns" ]
           [ div [ class "section-wrapper" ]
             [ h4 [] [ text "Rules" ]
-            , lazy2 ruleFields address model
+            , lazy2 singleRuleDisplay address model
             ]
           ]
-        , div
-          [ class "column small-6" ]
+        ]
+      , div [ class "row" ]
+        [ div
+          [ class "column small-12" ]
           [ a
             (buttonAction [ classList
                [("button success right", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
@@ -385,8 +387,8 @@ subToOption : Subject -> Html
 subToOption s = option [ value (toString s.sid) ] [ text s.name ]
 
 
-ruleFields : Address Action -> Model -> Html
-ruleFields address model =
+singleRuleDisplay : Address Action -> Model -> Html
+singleRuleDisplay address model =
   let
     deleteAllRulesButton =
       if List.isEmpty model.rules
@@ -395,12 +397,12 @@ ruleFields address model =
   in
     div []
       ([ div  [ class "rules-display" ]
-          (List.map (ruleField address) model.rules)
-      ] ++ [ruleInput address model] ++ deleteAllRulesButton )
+          (List.map (ruleDisplay address) model.rules)
+      ] ++ [ruleFields address model] ++ deleteAllRulesButton )
 
 
-ruleField : Address Action -> Rule -> Html
-ruleField address { target, severity, rid }  =
+ruleDisplay : Address Action -> Rule -> Html
+ruleDisplay address { target, severity, rid }  =
   div
     [ class "row" ]
     [ div
@@ -415,8 +417,8 @@ ruleField address { target, severity, rid }  =
     ]
 
 
-ruleInput : Address Action -> Model -> Html
-ruleInput address model =
+ruleFields : Address Action -> Model -> Html
+ruleFields address model =
   let
     toOption i = option [ value (toString i) ] [ text <| Maybe.withDefault "invalid" (days !! i) ]
     updateTarget = Signal.message address << UpdateRuleTarget
@@ -424,7 +426,7 @@ ruleInput address model =
     updateSlot = Signal.message address << withDefault NoOp UpdateRuleSlot << String.toInt
     updateSeverity = Signal.message address << withDefault NoOp UpdateSeverity << String.toInt
     uDayIn = div
-              [ class "columns small-6" ]
+              [ class "columns small-2" ]
               [ label
                 [ for "update-rule-day" ]
                 [ text "Target Day" ]
@@ -433,7 +435,7 @@ ruleInput address model =
                 (List.map toOption [0..List.length days])
               ]
     uSlotIn = div
-                [ class "small-6 columns" ]
+                [ class "small-2 columns" ]
                 [ label
                   [ for "update-rule-slot" ]
                   [ text "Target Slot" ]
@@ -459,7 +461,7 @@ ruleInput address model =
       [ div
         [ class "row" ]
         ([ div
-          [ class "columns small-6" ]
+          [ class "columns small-3" ]
           [ label
             [ for "update-target" ]
             [ text "Select Target" ]
@@ -473,27 +475,24 @@ ruleInput address model =
             "day"  -> [uDayIn]
             "slot" -> [uSlotIn]
             _      -> [])
-          ++  [ div
-                [ class "columns small-6" ]
-                [ label
-                  [ for "update-severity" ]
-                  [ text "Select Rule impact" ]
-                , select
-                  [ Attr.id "update-severity", on "input" targetValue updateSeverity ]
-                  (List.map ((\a -> option [ value a ] [text a]) << toString) [0..10])
-                ]
-              ]
-            )
-        , div
-          [ class "row" ]
-          [ div
-            [ class "column small-12" ]
-            [ a
-              (buttonAction [ classList [("button success expand", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
-              [ text "+" ]
-            ]
+        ++
+        [ div
+          [ class "columns small-3" ]
+          [ label
+            [ for "update-severity" ]
+            [ text "Select Rule impact" ]
+          , select
+            [ Attr.id "update-severity", on "input" targetValue updateSeverity ]
+            (List.map ((\a -> option [ value a ] [text a]) << toString) [0..10])
           ]
-        ]
+        , div
+          [ class "column small-2" ]
+          [ a
+            (buttonAction [ classList [("button success expand", True), ("disabled", not enabled), ("has-tip", not enabled)] ])
+            [ text "+" ]
+          ]
+        ])
+      ]
 
 
 targetToString : Types.Target -> String
